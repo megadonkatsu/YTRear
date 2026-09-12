@@ -31,7 +31,7 @@ YouTube Music MediaSession
 Requires JDK 17 and the Android SDK (compileSdk 36, build tools 36.0.0).
 
 ```bash
-./gradlew :app:assembleAllowlistedDebug
+./gradlew :app:assembleDebug
 ```
 
 Install the APK, open the app, grant notification access, then tap **Start / Refresh rear
@@ -39,16 +39,11 @@ controls**. In HyperOS app settings enable **Autostart** and set Battery saver t
 restrictions**. Don't swipe the app from Recents — HyperOS treats that as a force-stop and blocks
 listener rebinding.
 
-## Variants
+## Package identity
 
-| Variant | Purpose |
-|---|---|
-| `allowlistedDebug` | Working rear-screen media proxy |
-| `normalDebug` | Probe harness; not eligible for the native rear widget |
-
-The `allowlisted` flavor overrides `applicationId` to a package name the firmware accepts. Android
-cannot install the genuine owner of that package alongside this build. Use it only on a device you
-own, for interoperability testing.
+The build sets `applicationId` to a package name that is on the firmware's rear-music map, while
+the Kotlin namespace stays `dev.ytrear.app`. Android cannot install the genuine owner of that
+package alongside this build. Use it only on a device you own, for interoperability testing.
 
 ## Notification behavior
 

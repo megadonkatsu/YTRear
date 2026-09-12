@@ -9,26 +9,14 @@ android {
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "dev.ytrear.app"
+        // Xiaomi's rear-screen service gates music widgets on an exact package-name
+        // map, and compares only the package name. This id is on that map; the
+        // Kotlin namespace above stays ours.
+        applicationId = "com.luna.music"
         minSdk = 29
         targetSdk = 36
         versionCode = 12
         versionName = "1.2"
-    }
-
-    // Xiaomi's rear-screen service gates music widgets on an exact package-name map.
-    // Keep the normal app untouched and provide a separate proof build using an
-    // allowlisted third-party music identity that is absent from the test phone.
-    flavorDimensions += "identity"
-    productFlavors {
-        create("normal") {
-            dimension = "identity"
-        }
-        create("allowlisted") {
-            dimension = "identity"
-            applicationId = "com.luna.music"
-            versionNameSuffix = "-allowlisted"
-        }
     }
 
     buildTypes {

@@ -113,7 +113,7 @@ A focus notification qualifies when either `miui.focus.isFocus=true` or `miui.fo
 before resolving the declared business. Adding `"business":"music"` cannot make an unknown package
 eligible.
 
-The allowlisted YTRear flavor successfully rendered a custom rear card, proving that package-name
+The allowlisted YTRear build successfully rendered a custom rear card, proving that package-name
 spoofing also works on this path. Its `PendingIntent` buttons work while the main display is awake,
 but HyperOS suppresses them when the main display sleeps. This is why the product uses the native
 MAML media path instead.

@@ -10,9 +10,9 @@ Rechecked on <date>; the installed APK was last updated on <date>:
 Device       Xiaomi 17 Pro
 OS           Android 16, HyperOS OS3.0.318.0.WBLCNXM
 Package      com.luna.music
-Version      1.2-allowlisted (versionCode 12, targetSdk 36)
-APK size     12,194,353 bytes
-SHA-256      07974248DB3F2D2FEA99F79D1C86A46ABD60F8FB2D2FBA406130772D30ED389F
+Version      1.2 (versionCode 12, targetSdk 36)
+APK size     12,193,289 bytes
+SHA-256      86AE87EFB6C9BDE18F144238AACA59B7D2701B5E5A48E2A873DAB01E6E669E03
 ```
 
 The APK installed on the phone matches the current build output by SHA-256. Notification access
