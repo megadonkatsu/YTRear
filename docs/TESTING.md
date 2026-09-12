@@ -1,7 +1,6 @@
 # BackBeat 1.2 testing
 
-This is the current validation checklist for the installed stable build. It replaces the old
-version-specific `TOMORROW_TEST.md` handoff.
+This is the current validation checklist for the installed stable build.
 
 ## Baseline
 
@@ -112,7 +111,7 @@ run kept the underlying YouTube Music MediaSession and playback alive.
 Run in PowerShell on the Windows host:
 
 ```powershell
-$adb = "$env:LOCALAPPDATAAndroidSdkplatform-toolsdb.exe"
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 $DEVICE = (& $adb devices) [1].Split()[0]   # your adb serial
 
 # Installed build

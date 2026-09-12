@@ -250,8 +250,6 @@ com.luna.music/dev.backbeat.app.MainActivity
 - Version 1.2 intentionally replaces YouTube Music's visible media notification with BackBeat's.
   To restore the native notification, disable BackBeat notification access, then force-stop and
   reopen YouTube Music.
-- This project is not a Git repository. Preserve a copy before broad edits because there is no
-  commit-based rollback.
 
 ## Evidence
 
