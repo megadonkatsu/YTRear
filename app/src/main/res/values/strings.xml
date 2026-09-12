@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BackBeat</string>
+    <string name="tagline">Rear-screen controls for YouTube Music</string>
+
+    <!-- Primary actions -->
+    <string name="enable_notification_access">Enable notification access</string>
+    <string name="start_rear_controls">Start rear controls</string>
+    <string name="refresh_rear_controls">Refresh rear controls</string>
+    <string name="daily_hint">Set up once. After that just open YouTube Music and press play — the rear card appears on its own.</string>
+
+    <!-- Status card -->
+    <string name="state_setup_title">Setup needed</string>
+    <string name="state_setup_detail">BackBeat needs notification access to read what YouTube Music is playing.</string>
+    <string name="state_start_title">Almost ready</string>
+    <string name="state_start_detail">Tap “Start rear controls” once to publish the rear-screen card.</string>
+    <string name="state_waiting_title">Waiting for music</string>
+    <string name="state_waiting_detail">Open YouTube Music and press play. The rear card appears within a second or two.</string>
+    <string name="state_linking_title">Connecting</string>
+    <string name="state_linking_detail">Handing playback to the rear screen…</string>
+    <string name="state_ready_title">Rear controls active</string>
+    <string name="state_ready_detail">Play, pause, next and previous work on the rear screen with the phone locked.</string>
+    <string name="unknown_track">Unknown track</string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="album_art">Album art</string>
+
+    <!-- Diagnostics -->
+    <string name="show_advanced">Advanced</string>
+    <string name="hide_advanced">Hide advanced</string>
+    <string name="advanced_note">Developer probes from the rear-display research. Not needed for daily use.</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_overlay_permission">Overlay permission</string>
+    <string name="action_show_activity">Show (activity)</string>
+    <string name="action_show_service">Show (service)</string>
+    <string name="action_hide">Hide rear overlay</string>
+    <string name="label_status">Status</string>
+    <string name="label_displays">Displays</string>
+    <string name="label_log">Log</string>
+</resources>
