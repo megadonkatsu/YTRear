@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.util.Log
 import java.text.SimpleDateFormat
@@ -7,7 +7,7 @@ import java.util.Locale
 
 /** Shared scratch log so the probe's findings show up both in logcat and on screen. */
 object Probe {
-    const val TAG = "BackBeatProbe"
+    const val TAG = "YTRearProbe"
 
     fun interface Sink { fun onLog(full: String) }
 

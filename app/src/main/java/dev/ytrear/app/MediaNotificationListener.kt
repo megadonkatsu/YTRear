@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.app.Notification
 import android.content.ComponentName
@@ -7,7 +7,7 @@ import android.service.notification.StatusBarNotification
 
 /**
  * Holding notification-listener access unlocks MediaSessionManager.getActiveSessions(). YouTube
- * Music's own MediaStyle notification is snoozed while BackBeat supplies the replacement player;
+ * Music's own MediaStyle notification is snoozed while YTRear supplies the replacement player;
  * this prevents HyperOS from replacing and collapsing the expanded Dynamic Island on a skip.
  */
 class MediaNotificationListener : NotificationListenerService() {

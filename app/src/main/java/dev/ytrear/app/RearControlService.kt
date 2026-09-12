@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.app.Notification
 import android.app.NotificationChannel

@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.content.Context
 import android.graphics.Color
@@ -93,7 +93,7 @@ class RearWindow(private val context: Context) {
                     setTextColor(Color.WHITE)
                     textSize = 14f
                     gravity = Gravity.CENTER
-                    text = "BACKBEAT\n${info.width}x${info.height}\n@${info.densityDpi}dpi"
+                    text = "YTREAR\n${info.width}x${info.height}\n@${info.densityDpi}dpi"
                 },
                 FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,

@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -367,7 +367,7 @@ object NativeMediaProxy {
     }
 
     private fun ensureSession(context: Context): MediaSession =
-        session ?: MediaSession(context, "BackBeatProxy").apply {
+        session ?: MediaSession(context, "YTRearProxy").apply {
             setCallback(callback, main)
             setFlags(
                 MediaSession.FLAG_HANDLES_MEDIA_BUTTONS or

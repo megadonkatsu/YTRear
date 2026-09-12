@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BackBeat"
+rootProject.name = "YTRear"
 include(":app")

@@ -1,4 +1,4 @@
-# BackBeat 1.2 testing
+# YTRear 1.2 testing
 
 This is the current validation checklist for the installed stable build.
 
@@ -20,7 +20,7 @@ is granted, and `RearControlService` is running in the foreground.
 
 ## Confirmed behavior
 
-- The native Xiaomi MAML card receives BackBeat proxy controls while display 0 is off.
+- The native Xiaomi MAML card receives YTRear proxy controls while display 0 is off.
 - Rear play/pause, next, and previous control YouTube Music.
 - Version 0.9's 80 ms / 3.2-second rank lease keeps the rear card stationary during track changes.
 - Version 1.0's saved trace shows the main-display artwork converging to the current track after
@@ -29,12 +29,12 @@ is granted, and `RearControlService` is running in the foreground.
 - Version 1.1's installed proxy MediaSession activity and notification 78 content intent both
   resolve to `com.google.android.apps.youtube.music/.activities.MusicActivity`.
 - The Dynamic Island player and proxy media notification were both physically confirmed to open
-  YouTube Music instead of BackBeat.
+  YouTube Music instead of YTRear.
 - Version 1.2 automatically snoozes only YouTube Music's MediaStyle notification for 30 days. A
   forced YouTube Music restart produced `MEDIA LISTENER: snoozed YouTube Music media notification
   for 30 days`; both the real and proxy MediaSessions remained `PLAYING`.
-- A targeted command against the installed 1.2 `BackBeatProxy` changed tracks and logged zero
-  YouTube Music SystemUI media loads, zero BackBeat island removals, and zero
+- A targeted command against the installed 1.2 `YTRearProxy` changed tracks and logged zero
+  YouTube Music SystemUI media loads, zero YTRear island removals, and zero
   `EXPANDED_TO_DELETED` transitions.
 - The same notification-snooze state was physically confirmed to keep the Dynamic Island expanded
   when Next was pressed.
@@ -46,8 +46,8 @@ are the remaining regression and durability coverage for the exact currently ins
 
 ### 1. Version 1.2 physical regression
 
-- [x] Tap the expanded Dynamic Island player and confirm YouTube Music opens instead of BackBeat.
-- [x] Tap the proxy media notification card and confirm YouTube Music opens instead of BackBeat.
+- [x] Tap the expanded Dynamic Island player and confirm YouTube Music opens instead of YTRear.
+- [x] Tap the proxy media notification card and confirm YouTube Music opens instead of YTRear.
 - [x] Expand the Dynamic Island, press Next, and confirm the island stays expanded.
 - [ ] Open the main display's media card and press next.
 - [ ] Confirm title and artist update immediately and artwork follows in about 1.5 seconds.
@@ -62,13 +62,13 @@ PROXY NOTIFICATION: artwork refreshed for '<new track>'
 PROXY NOTIFICATION: artwork post confirmed for '<new track>'
 ```
 
-During these checks, `cmd notification list` should contain BackBeat notification 78 and no
+During these checks, `cmd notification list` should contain YTRear notification 78 and no
 YouTube Music notification 2. `dumpsys notification --noredact` should list notification 2 under
 `Snoozed notifications` and `Pending snoozed notifications`.
 
 ### 2. All controls with display 0 off
 
-- [ ] Start YouTube Music and ensure BackBeat reports **Rear controls active**.
+- [ ] Start YouTube Music and ensure YTRear reports **Rear controls active**.
 - [ ] Turn off display 0 and wait at least 30 seconds.
 - [ ] Wake only the rear panel and test previous, play/pause, and next separately.
 - [ ] Confirm each action changes playback and logs `PROXY CONTROL: sent ... to YouTube Music`.
@@ -81,26 +81,26 @@ next passed shorter runs. This repetition closes the symmetric matrix on version
 
 Repeat this test at least twice:
 
-1. Keep BackBeat's foreground-service notification, but pause playback and dismiss the media card
+1. Keep YTRear's foreground-service notification, but pause playback and dismiss the media card
    used in the original failure.
-2. Wait at least five minutes without reopening BackBeat.
+2. Wait at least five minutes without reopening YTRear.
 3. Open only YouTube Music and start a track.
-4. Confirm BackBeat becomes top media within about one to two seconds without touching either
+4. Confirm YTRear becomes top media within about one to two seconds without touching either
    notification.
 5. Confirm the log ends with `proxy ranking lease complete; sessionOnly=true` and contains no
    notification enqueue-rate shedding.
 
 ### 4. Lifecycle and stress matrix
 
-- [ ] Kill and restart YouTube Music while BackBeat stays alive.
+- [ ] Kill and restart YouTube Music while YTRear stays alive.
 - [ ] Revoke and re-grant notification-listener access.
-- [ ] Force-stop BackBeat, relaunch it, and tap **Start / Refresh rear controls**.
+- [ ] Force-stop YTRear, relaunch it, and tap **Start / Refresh rear controls**.
 - [ ] Reboot, start YouTube Music, and verify automatic listener reconnection.
 - [ ] Pause for more than 60 minutes and verify the widget can be restored normally.
 - [ ] Press next three times rapidly; confirm title, artwork, and playback converge on the final
   track with no enqueue-rate warning.
-- [ ] Disable BackBeat notification access, force-stop/reopen YouTube Music, and confirm its native
-  media notification returns; then re-enable BackBeat and confirm automatic snoozing resumes.
+- [ ] Disable YTRear notification access, force-stop/reopen YouTube Music, and confirm its native
+  media notification returns; then re-enable YTRear and confirm automatic snoozing resumes.
 
 Do not disable YouTube Music notifications app-wide. Version 1.2 intentionally snoozes only its
 active MediaStyle notification through the authorized notification listener. The verified device
@@ -122,7 +122,7 @@ $DEVICE = (& $adb devices) [1].Split()[0]   # your adb serial
 & $adb -s $DEVICE shell dumpsys notification --noredact |
   Select-String -Pattern 'com.luna.music|android.mediaSession' -Context 3,12
 & $adb -s $DEVICE shell dumpsys media_session |
-  Select-String -Pattern 'BackBeatProxy|com.luna.music' -Context 2,8
+  Select-String -Pattern 'YTRearProxy|com.luna.music' -Context 2,8
 
 # Dynamic Island suppression state
 & $adb -s $DEVICE shell cmd notification list

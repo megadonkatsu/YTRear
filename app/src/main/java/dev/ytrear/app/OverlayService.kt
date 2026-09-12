@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -57,7 +57,7 @@ class OverlayService : Service() {
             )
         }
         return Notification.Builder(this, CHANNEL)
-            .setContentTitle("BackBeat probe")
+            .setContentTitle("YTRear probe")
             .setContentText("Holding a window on the rear display")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setOngoing(true)
@@ -65,8 +65,8 @@ class OverlayService : Service() {
     }
 
     companion object {
-        const val ACTION_SHOW = "dev.backbeat.app.SHOW"
-        const val ACTION_HIDE = "dev.backbeat.app.HIDE"
+        const val ACTION_SHOW = "dev.ytrear.app.SHOW"
+        const val ACTION_HIDE = "dev.ytrear.app.HIDE"
         private const val CHANNEL = "rear_screen"
         private const val NOTIF_ID = 42
 

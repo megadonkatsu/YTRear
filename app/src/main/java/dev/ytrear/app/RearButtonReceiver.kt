@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.content.BroadcastReceiver
 import android.content.Context

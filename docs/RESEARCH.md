@@ -1,6 +1,6 @@
-# BackBeat research notes
+# YTRear research notes
 
-This document preserves the durable reverse-engineering findings behind BackBeat. It is historical
+This document preserves the durable reverse-engineering findings behind YTRear. It is historical
 reference, not a current test handoff. For current setup and artifact details, use the
 [project README](../README.md); for open validation work, use [Testing](TESTING.md).
 
@@ -62,10 +62,10 @@ com.spotify.music
 ```
 
 At this gate HyperOS compares only the package name. It does not validate the app certificate,
-installer, UID lineage, system status, or privileged permissions. Building BackBeat with
+installer, UID lineage, system status, or privileged permissions. Building YTRear with
 `applicationId = "com.luna.music"` passed the gate as an ordinary user-installed app.
 
-This creates a namespace collision: BackBeat and the genuine Luna Music app cannot coexist.
+This creates a namespace collision: YTRear and the genuine Luna Music app cannot coexist.
 
 ### Native media path
 
@@ -113,7 +113,7 @@ A focus notification qualifies when either `miui.focus.isFocus=true` or `miui.fo
 before resolving the declared business. Adding `"business":"music"` cannot make an unknown package
 eligible.
 
-The allowlisted BackBeat flavor successfully rendered a custom rear card, proving that package-name
+The allowlisted YTRear flavor successfully rendered a custom rear card, proving that package-name
 spoofing also works on this path. Its `PendingIntent` buttons work while the main display is awake,
 but HyperOS suppresses them when the main display sleeps. This is why the product uses the native
 MAML media path instead.
@@ -124,7 +124,7 @@ During next/previous, YouTube Music can briefly become SystemUI's top media item
 delays removal of an unsupported player by 150 ms only when top-media callbacks remain less than
 200 ms apart. A fast proxy recovery alone is insufficient if the previous callback is too old.
 
-BackBeat therefore alternates an unused, non-rendered `MediaSession` action bit:
+YTRear therefore alternates an unused, non-rendered `MediaSession` action bit:
 
 - play/pause uses a short 45 ms pulse sequence;
 - next/previous and real metadata changes start an 80 ms, 3.2-second lease; and
@@ -149,8 +149,8 @@ front card in about 1.5 seconds and subsequent ranking pulses replay the current
 A fresh physical Next trace established why the expanded Dynamic Island collapsed. YouTube Music
 published its new playing state, HyperOS immediately selected notification key
 `0|com.google.android.apps.youtube.music|2|null|<uid>` as top media, and
-`MiuiIslandMediaControllerImpl` synchronously removed BackBeat key
-`0|com.luna.music|78|null|<uid>`. BackBeat reclaimed top rank about 40 ms later, but the island's
+`MiuiIslandMediaControllerImpl` synchronously removed YTRear key
+`0|com.luna.music|78|null|<uid>`. YTRear reclaimed top rank about 40 ms later, but the island's
 expanded state had already been destroyed.
 
 Firmware inspection showed that equivalent playing/local/active sessions are finally ordered by
@@ -159,13 +159,13 @@ island removal occurs synchronously during the competing YouTube Music update.
 
 The successful route is to keep YouTube Music's MediaSession active while snoozing only its
 MediaStyle notification. Contrary to the earlier cancellation experiment, a notification-manager
-snooze did not tear down playback. YouTube Music and BackBeat both remained `PLAYING`, subsequent
+snooze did not tear down playback. YouTube Music and YTRear both remained `PLAYING`, subsequent
 track changes did not repost the snoozed notification into SystemUI, and the user physically
 confirmed that the expanded island stayed open.
 
 Version 1.2 performs that targeted snooze from `MediaNotificationListener` for 30 days whenever
 the notification becomes active. Its installed-build trace records a successful proxy Next with
-zero YouTube Music SystemUI media loads, zero BackBeat island removals, and zero
+zero YouTube Music SystemUI media loads, zero YTRear island removals, and zero
 `EXPANDED_TO_DELETED` transitions. Package-level app-op changes, UID-level app-op changes, runtime
 permission revocation, and adb input injection were not viable on this HyperOS build.
 
@@ -183,7 +183,7 @@ permission revocation, and adb input injection were not viable on this HyperOS b
 | Eligible dummy media session | Failed | Subscreen MAML controller still filters the selected session by package |
 | `PinReceiveActivity` | Display-only fallback | Exported ACTION_SEND supports text/image but has no callbacks or actions |
 | Cancel YouTube Music notification | Harmful | Direct cancellation can tear down or destabilize the player's foreground-service path |
-| Snooze only YouTube Music MediaStyle notification | Working | Playback survives; the competing SystemUI media entry stays absent while BackBeat replaces it |
+| Snooze only YouTube Music MediaStyle notification | Working | Playback survives; the competing SystemUI media entry stays absent while YTRear replaces it |
 | Change notification app-op over adb | Ineffective | HyperOS retained/reported the package notification op as allowed, and UID mode did not block the media post |
 
 The direct-window, wake-lock, and custom `RemoteViews` input routes are conclusive for this
@@ -202,7 +202,7 @@ firmware and should not be resumed unless the firmware or product constraints ch
 | 0.8 | Session-only rank defense fixed play/pause slide but not next/previous |
 | 0.9 | Full transition lease passed rear controls and stationary-card physical test |
 | 1.0 | Front-card artwork refresh added; device trace passed, Dynamic Island limitation documented |
-| 1.1 | Dynamic Island and proxy-notification taps now open YouTube Music instead of BackBeat |
+| 1.1 | Dynamic Island and proxy-notification taps now open YouTube Music instead of YTRear |
 | 1.2 | Targeted YouTube Music media-notification snooze keeps the expanded Dynamic Island open on skip |
 
 Old APK sizes, hashes, transient installation state, and superseded handoff instructions were
@@ -223,10 +223,10 @@ claim needs to be checked.
 | `Displays.kt`, `RearWindow.kt`, `OverlayService.kt` | Historical display/window probes |
 
 The installed package is `com.luna.music`, but the source namespace remains
-`dev.backbeat.app`. The explicit activity component is therefore:
+`dev.ytrear.app`. The explicit activity component is therefore:
 
 ```text
-com.luna.music/dev.backbeat.app.MainActivity
+com.luna.music/dev.ytrear.app.MainActivity
 ```
 
 ## Practical gotchas
@@ -243,12 +243,12 @@ com.luna.music/dev.backbeat.app.MainActivity
   dispatching a custom `PendingIntent`.
 - `WakeLock.isHeld` is not authoritative on HyperOS; `dumpsys power` can show the held lock marked
   `DISABLED`.
-- Do not swipe BackBeat from Recents during normal use. HyperOS treats it as a force-stop and may
+- Do not swipe YTRear from Recents during normal use. HyperOS treats it as a force-stop and may
   reject notification-listener rebinding.
 - Physical input cannot be automated on this phone because adb input injection lacks
   `INJECT_EVENTS`; final rear-panel checks require a person.
-- Version 1.2 intentionally replaces YouTube Music's visible media notification with BackBeat's.
-  To restore the native notification, disable BackBeat notification access, then force-stop and
+- Version 1.2 intentionally replaces YouTube Music's visible media notification with YTRear's.
+  To restore the native notification, disable YTRear notification access, then force-stop and
   reopen YouTube Music.
 
 ## Evidence

@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    namespace = "dev.backbeat.app"
+    namespace = "dev.ytrear.app"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "dev.backbeat.app"
+        applicationId = "dev.ytrear.app"
         minSdk = 29
         targetSdk = 36
         versionCode = 12

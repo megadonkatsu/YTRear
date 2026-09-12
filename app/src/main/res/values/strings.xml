@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BackBeat</string>
+    <string name="app_name">YTRear</string>
     <string name="tagline">Rear-screen controls for YouTube Music</string>
 
     <!-- Primary actions -->
@@ -11,7 +11,7 @@
 
     <!-- Status card -->
     <string name="state_setup_title">Setup needed</string>
-    <string name="state_setup_detail">BackBeat needs notification access to read what YouTube Music is playing.</string>
+    <string name="state_setup_detail">YTRear needs notification access to read what YouTube Music is playing.</string>
     <string name="state_start_title">Almost ready</string>
     <string name="state_start_detail">Tap “Start rear controls” once to publish the rear-screen card.</string>
     <string name="state_waiting_title">Waiting for music</string>

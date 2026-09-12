@@ -1,4 +1,4 @@
-package dev.backbeat.app
+package dev.ytrear.app
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -23,7 +23,7 @@ object RearNotification {
 
     private const val CHANNEL = "rear_widget"
     const val NOTIF_ID = 77
-    const val ACTION_BUTTON = "dev.backbeat.app.REAR_BUTTON"
+    const val ACTION_BUTTON = "dev.ytrear.app.REAR_BUTTON"
 
     private const val MAX_ART_EDGE = 144
 

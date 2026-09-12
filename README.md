@@ -1,4 +1,4 @@
-# BackBeat
+# YTRear
 
 Control YouTube Music from the Xiaomi 17 Pro rear "Magic Back Screen" while the main display is
 off. Runs on a locked, non-rooted phone — no Shizuku, no privileged install.
@@ -6,7 +6,7 @@ off. Runs on a locked, non-rooted phone — no Shizuku, no privileged install.
 ## How it works
 
 HyperOS gates its native rear music widget on an exact package-name allowlist. It does not check
-the certificate, installer, UID lineage, or privileged status at that gate. BackBeat builds under
+the certificate, installer, UID lineage, or privileged status at that gate. YTRear builds under
 an allowlisted package identity, mirrors YouTube Music's `MediaSession` through a notification-
 listener-authorized `MediaController`, and republishes it to the native rear widget. Transport
 callbacks from the rear screen are forwarded back to YouTube Music.
@@ -52,10 +52,10 @@ own, for interoperability testing.
 
 ## Notification behavior
 
-While active, BackBeat snoozes YouTube Music's own `MediaStyle` notification. If both enter
-SystemUI, HyperOS replaces BackBeat's Dynamic Island entry during a skip and destroys its expanded
-state. Playback is unaffected; BackBeat's proxy notification becomes the visible player. To
-restore the native notification, disable BackBeat's notification access, then force-stop and
+While active, YTRear snoozes YouTube Music's own `MediaStyle` notification. If both enter
+SystemUI, HyperOS replaces YTRear's Dynamic Island entry during a skip and destroys its expanded
+state. Playback is unaffected; YTRear's proxy notification becomes the visible player. To
+restore the native notification, disable YTRear's notification access, then force-stop and
 reopen YouTube Music.
 
 ## Docs
