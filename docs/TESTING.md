@@ -4,19 +4,18 @@ This is the current validation checklist for the installed stable build.
 
 ## Baseline
 
-Rechecked on <date>; the installed APK was last updated on <date>:
+The validated configuration is:
 
 ```text
 Device       Xiaomi 17 Pro
 OS           Android 16, HyperOS OS3.0.318.0.WBLCNXM
 Package      com.luna.music
 Version      1.2 (versionCode 12, targetSdk 36)
-APK size     12,193,289 bytes
-SHA-256      86AE87EFB6C9BDE18F144238AACA59B7D2701B5E5A48E2A873DAB01E6E669E03
 ```
 
-The APK installed on the phone matches the current build output by SHA-256. Notification access
-is granted, and `RearControlService` is running in the foreground.
+Confirm the APK installed on the phone matches your own build output by SHA-256 before running
+these checks, and that notification access is granted with `RearControlService` in the
+foreground.
 
 ## Confirmed behavior
 
@@ -133,8 +132,9 @@ $DEVICE = (& $adb devices) [1].Split()[0]   # your adb serial
 & $adb -s $DEVICE logcat -d -v threadtime |
   Select-String -Pattern 'PROXY SESSION|PROXY NOTIFICATION|PROXY CONTROL|proxy rank|topMediaDataChanged|unified.music|Removed current widget|Creating new music widget|Shedding'
 
-# Rear capture: use the physical id, not logical display id 1
-& $adb -s $DEVICE shell screencap -p -d <physical-display-id> `
+# Rear capture: use the physical id, not logical display id 1.
+# Read $REAR from your own `dumpsys display` output; it is vendor-assigned per unit.
+& $adb -s $DEVICE shell screencap -p -d $REAR `
   /data/local/tmp/rear.png
 & $adb -s $DEVICE pull /data/local/tmp/rear.png .
 
@@ -146,5 +146,5 @@ $DEVICE = (& $adb devices) [1].Split()[0]   # your adb serial
 An all-black rear PNG around 3.5 KB usually means the panel was asleep. A live capture is commonly
 90–220 KB, so check display state and file size before treating a black capture as a render failure.
 
-Save any new focused trace in [`evidence/`](evidence/) and add it to the
-[evidence index](evidence/README.md).
+Device traces captured during these checks contain personal activity (running apps, wake/sleep
+timing, and whatever media happens to be playing). Keep them local and redact them before sharing.

@@ -84,7 +84,6 @@ package alongside this build. Use it only on a device you own, for interoperabil
 
 - [Research](docs/RESEARCH.md) — reverse-engineering findings and rejected approaches
 - [Testing](docs/TESTING.md) — validation status and diagnostic commands
-- [Evidence](docs/evidence/README.md) — device traces and screenshots
 
 Tested against Android 16 / SDK 36, HyperOS `OS3.0.318.0.WBLCNXM` on a Xiaomi 17 Pro. The rear
 widget path is firmware-specific and will not survive arbitrary HyperOS versions.

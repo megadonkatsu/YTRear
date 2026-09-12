@@ -4,7 +4,7 @@ This document preserves the durable reverse-engineering findings behind YTRear. 
 reference, not a current test handoff. For current setup and artifact details, use the
 [project README](../README.md); for open validation work, use [Testing](TESTING.md).
 
-Findings were produced on a physical Xiaomi 17 Pro on <date> unless stated otherwise.
+Findings were produced on a physical Xiaomi 17 Pro unless stated otherwise.
 
 ## Goal and constraints
 
@@ -27,11 +27,15 @@ HyperOS          OS3.0.318.0.WBLCNXM (China ROM)
 | Property | Rear panel | Main panel |
 |---|---|---|
 | Logical display id | 1 | 0 |
-| Physical display id | <physical-display-id> | <physical-display-id> |
+| Physical display id | vendor-assigned (see below) | vendor-assigned (see below) |
 | Resolution | 904 × 572 | 1220 × 2656 |
 | Density | 450 dpi | 520 dpi |
 | Display group | 1, independent power | 0 |
 | `canHostTasks` | false | true |
+
+The physical display ids are vendor-assigned 64-bit values that `screencap -d` requires and that
+`adb shell dumpsys display` reports per unit. Read them off the device rather than copying them
+from documentation.
 
 The rear camera cutout occupies the left 296 pixels. The practical content area is approximately
 608 × 572 pixels. A sleeping panel is often `OFF` with committed state `DOZE_SUSPEND`; an all-black
@@ -81,19 +85,17 @@ music switch is enabled. It then creates `unified.music:music_media`. The MAML c
 filters active sessions by the same package list, so an allowlisted proxy session is required;
 keeping an unrelated eligible dummy session alive does not unlock YouTube Music directly.
 
-The successful screen-off sequence was:
+The successful screen-off sequence was, in relative time:
 
 ```text
-<time>  main display group 0 went to sleep
-<time>  only rear display group 1 woke
-<time>  PROXY CONTROL: sent previous to YouTube Music
-<time>  PROXY CONTROL: sent previous to YouTube Music
+T+0        main display group 0 went to sleep
+T+71 s     only rear display group 1 woke
+T+72 s     PROXY CONTROL: sent previous to YouTube Music
+T+73 s     PROXY CONTROL: sent previous to YouTube Music
 ```
 
-The saved display dump records display 0 as `OFF`. See the
-[screen-off screenshot](evidence/proxy-screen-off-success.png),
-[focused log](evidence/proxy-screen-off-success-log.txt), and
-[display dump](evidence/proxy-screen-off-success-display.txt).
+Throughout that run the display dump reported display 0 as `OFF`, confirming the main panel never
+woke.
 
 ### Focus-notification path
 
@@ -131,7 +133,7 @@ YTRear therefore alternates an unused, non-rendered `MediaSession` action bit:
 - the proxy stays logically playing through transient paused callbacks during a track transition.
 
 Version 0.9 device traces contained no widget removal, recreation, forced popup, or slide event,
-and the user physically confirmed that the rear card remains stationary.
+and a physical check confirmed that the rear card remains stationary.
 
 ### Main-display artwork
 
@@ -140,9 +142,8 @@ MediaStyle notification is posted. Ranking pulses can replay SystemUI's previous
 a single artwork repost left the front card exactly one track behind.
 
 Version 1.0 posts the updated card and one confirmation post 600 ms later. It keeps notification
-78's original `when` value to prevent shade re-sorting. In the saved trace, new artwork reaches the
-front card in about 1.5 seconds and subsequent ranking pulses replay the current track. See
-[the version 1.0 trace](evidence/v10-main-display-artwork-log.txt).
+78's original `when` value to prevent shade re-sorting. In the verified run, new artwork reaches the
+front card in about 1.5 seconds and subsequent ranking pulses replay the current track.
 
 ### Dynamic Island top-media handoff
 
@@ -160,11 +161,11 @@ island removal occurs synchronously during the competing YouTube Music update.
 The successful route is to keep YouTube Music's MediaSession active while snoozing only its
 MediaStyle notification. Contrary to the earlier cancellation experiment, a notification-manager
 snooze did not tear down playback. YouTube Music and YTRear both remained `PLAYING`, subsequent
-track changes did not repost the snoozed notification into SystemUI, and the user physically
+track changes did not repost the snoozed notification into SystemUI, and a physical check
 confirmed that the expanded island stayed open.
 
 Version 1.2 performs that targeted snooze from `MediaNotificationListener` for 30 days whenever
-the notification becomes active. Its installed-build trace records a successful proxy Next with
+the notification becomes active. Its installed-build run recorded a successful proxy Next with
 zero YouTube Music SystemUI media loads, zero YTRear island removals, and zero
 `EXPANDED_TO_DELETED` transitions. Package-level app-op changes, UID-level app-op changes, runtime
 permission revocation, and adb input injection were not viable on this HyperOS build.
@@ -206,8 +207,8 @@ firmware and should not be resumed unless the firmware or product constraints ch
 | 1.2 | Targeted YouTube Music media-notification snooze keeps the expanded Dynamic Island open on skip |
 
 Old APK sizes, hashes, transient installation state, and superseded handoff instructions were
-removed from the active documentation. The raw evidence files remain available when a historical
-claim needs to be checked.
+removed from the active documentation. The raw device traces behind these findings were captured
+on a personal device and are not published; the durable conclusions are recorded above.
 
 ## Active implementation map
 
@@ -232,7 +233,7 @@ com.luna.music/dev.ytrear.app.MainActivity
 ## Practical gotchas
 
 - Use PowerShell for adb on Windows. Git Bash may rewrite `/data/...` and `package:...` arguments.
-- A non-interactive SSH shell may find Java 8 first; point `JAVA_HOME` at Android Studio's JBR.
+- A non-interactive shell may find Java 8 first; point `JAVA_HOME` at Android Studio's JBR.
 - `local.properties` must keep the escaped drive colon: `sdk.dir=C\:/Users/...`.
 - Do not use unqualified AppCompat-inflatable widgets in a rear `RemoteViews`. Xiaomi's host
   replaced `<ImageButton>` with AppCompat and crashed on `setImageResource`; fully qualified
@@ -251,11 +252,3 @@ com.luna.music/dev.ytrear.app.MainActivity
   To restore the native notification, disable YTRear notification access, then force-stop and
   reopen YouTube Music.
 
-## Evidence
-
-The curated inventory is in the [evidence index](evidence/README.md). The most important files are:
-
-- [native screen-off success](evidence/proxy-screen-off-success-log.txt)
-- [automatic takeover trace](evidence/v06-automatic-takeover-log.txt)
-- [stationary rear-card trace](evidence/v09-track-transition-ranking-log.txt)
-- [version 1.0 artwork trace](evidence/v10-main-display-artwork-log.txt)
