@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.3.2 - 2026-09-13
+
+- Restores the previous player's media notification automatically when the user selects a
+  different player.
+- Android does not expose direct unsnoozing to ordinary notification listeners, so YTRear shortens
+  the previous notification's existing snooze to 250 ms. Android then reposts it normally after
+  the new target has already been selected.
+- Persists pending restorations until the notification listener is connected, so switching still
+  cleans up correctly across listener disconnects or process restarts.
+- Verified on-device in both directions. Switching away from actively playing YouTube Music
+  removed it from both Android snooze lists and immediately restored its native notification;
+  switching back snoozed only YouTube Music again. The pending restoration marker cleared after
+  each handoff. If the previous player is not running, its notification returns the next time that
+  player posts one.
+- Bumped the candidate to version 1.3.2 (`versionCode 15`).
+
 ## 1.3.1 - 2026-09-13
 
 - Generalized the stable YouTube Music notification-ranking workaround to the player selected in

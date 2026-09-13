@@ -1,12 +1,12 @@
 # YTRear testing
 
-## Version 1.3.1 multi-player candidate
+## Version 1.3.2 multi-player candidate
 
-Version 1.3.1 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.
+Version 1.3.2 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.
 The picker is shown whenever the main activity is launched and lists every enabled app with a
 launcher activity. Only apps that publish a standard Android `MediaSession` can be proxied.
 
-Before promoting 1.3.1:
+Before promoting 1.3.2:
 
 - [ ] Confirm the picker opens on launch and can be searched by label or package name.
 - [ ] Confirm Spotify is omitted because it is supported by the rear screen natively.
@@ -37,8 +37,14 @@ top-media rank and collapse the expanded Dynamic Island during a track change.
   `Pending snoozed notifications` for 30 days, while its underlying MediaSession remained active.
 - [x] Targeted Play, Next, and Pause commands were forwarded through YTRear to
   `com.maxmpz.audioplayer`; the Poweramp and proxy states stayed synchronized.
-- [x] The exact final APK kept notifications 76 and 78 active, kept Poweramp's original card out of
-  the active list, and logged zero island-removal or `EXPANDED_TO_DELETED` events during Play/Next.
+- [x] Version 1.3.1 kept notifications 76 and 78 active, kept Poweramp's original card out of the
+  active list, and logged zero island-removal or `EXPANDED_TO_DELETED` events during Play/Next.
+- [x] Version 1.3.2 restored Poweramp when it was no longer selected: the Poweramp key disappeared
+  from both Android snooze lists within the short release deadline, and the persisted
+  pending-restore set cleared itself after processing.
+- [x] An active YouTube Music → Poweramp handoff restored YouTube Music notification 2 immediately.
+  Switching back to YouTube Music snoozed only notification 2 again, restored YTRear notifications
+  76 and 78, and left the pending-restore set empty.
 - [x] A 1.3 → exact archived 1.2 → 1.3 install round-trip succeeded while preserving the Poweramp
   selection and notification access.
 - [ ] Expand the Dynamic Island and press Next with Poweramp selected; confirm it physically stays
@@ -48,7 +54,7 @@ top-media rank and collapse the expanded Dynamic Island during a track change.
 - [ ] Repeat the rear-panel controls with display 0 off; physical rear input cannot be injected.
 
 The installed candidate APK SHA-256 is
-`145D1C1B1029C233F29B7AC995A4BDDADCB7786D7CCC426B5F2871092E6FD505`.
+`9E1314CF8359614F9562A569C7E1CE0950A7D57F295C56550CC7C6A34B995D3E`.
 
 ## Version 1.2 stable baseline
 

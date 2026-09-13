@@ -27,6 +27,7 @@ class MediaNotificationListener : NotificationListenerService() {
             MediaHub.addListener(mediaListener)
             observing = true
         }
+        restorePreviousPlayerMediaNotifications()
         snoozeActiveTargetMediaNotification()
         Probe.log("MEDIA LISTENER: connected; session access=$attached")
     }
@@ -88,6 +89,50 @@ class MediaNotificationListener : NotificationListenerService() {
         }?.let(::snoozeTargetMediaNotification)
     }
 
+    /**
+     * Ordinary listeners cannot directly unsnooze a notification. Rescheduling an existing
+     * snoozed record with a near-immediate deadline makes Android repost it through the normal
+     * notification pipeline, after the newly selected package has already become the target.
+     */
+    private fun restorePreviousPlayerMediaNotifications() {
+        val pending = PlayerSelection.pendingRestorePackages(this)
+        if (pending.isEmpty()) return
+
+        val snoozed = try {
+            snoozedNotifications.orEmpty()
+        } catch (e: SecurityException) {
+            Probe.log("MEDIA LISTENER: cannot inspect snoozed notifications (${e.javaClass.simpleName})")
+            return
+        }
+
+        val mediaByPackage = snoozed
+            .filter { it.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION) }
+            .groupBy { it.packageName }
+        val handled = mutableSetOf<String>()
+
+        pending.forEach { previousPackage ->
+            var restored = true
+            mediaByPackage[previousPackage].orEmpty().forEach { sbn ->
+                try {
+                    snoozeNotification(sbn.key, RESTORE_MEDIA_DELAY_MS)
+                    Probe.log(
+                        "MEDIA LISTENER: restoring previous player media notification " +
+                            "(${sbn.packageName})"
+                    )
+                } catch (e: SecurityException) {
+                    restored = false
+                    Probe.log(
+                        "MEDIA LISTENER: notification restore failed " +
+                            "(${e.javaClass.simpleName})"
+                    )
+                }
+            }
+            if (restored) handled += previousPackage
+        }
+
+        PlayerSelection.markRestoresHandled(this, handled)
+    }
+
     private fun snoozeTargetMediaNotification(sbn: StatusBarNotification) {
         try {
             snoozeNotification(sbn.key, TARGET_MEDIA_SNOOZE_MS)
@@ -102,6 +147,7 @@ class MediaNotificationListener : NotificationListenerService() {
 
     companion object {
         private const val TARGET_MEDIA_SNOOZE_MS = 30L * 24L * 60L * 60L * 1000L
+        private const val RESTORE_MEDIA_DELAY_MS = 250L
 
         @Volatile
         private var activeInstance: MediaNotificationListener? = null
@@ -114,6 +160,7 @@ class MediaNotificationListener : NotificationListenerService() {
         fun targetChanged(context: android.content.Context) {
             val listener = activeInstance
             if (listener != null) {
+                listener.restorePreviousPlayerMediaNotifications()
                 listener.snoozeActiveTargetMediaNotification()
             } else {
                 NotificationListenerService.requestRebind(

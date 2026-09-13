@@ -3,9 +3,24 @@
 Control a selected Android music player from the Xiaomi 17 Pro rear "Magic Back Screen" while the
 main display is off. Runs on a locked, non-rooted phone — no Shizuku, no privileged install.
 
-Current build: **1.3.1** (`versionCode 14`) — any player you pick, not just YouTube Music. See the
+Current build: **1.3.2** (`versionCode 15`) — any player you pick, not just YouTube Music. See the
 [changelog](CHANGELOG.md) for what changed, and [releases](https://github.com/megadonkatsu/YTRear/releases)
 for the signed APK. Version 1.2 remains the tagged stable baseline.
+
+## What's new in 1.3.2
+
+- **Switching players now cleans up after itself.** When you pick a different player, YTRear
+  releases the previous one's snoozed media notification instead of leaving it suppressed for the
+  rest of its 30-day timer. Android gives ordinary notification listeners no way to unsnooze
+  directly, so YTRear shortens the existing snooze to 250 ms and lets Android repost the
+  notification normally — after the new target has already taken over.
+- **The cleanup survives restarts.** Pending restorations are persisted, so a switch still resolves
+  correctly even if the notification listener is disconnected or the process is restarted at the
+  time.
+- **Verified on-device in both directions.** Switching away from actively playing YouTube Music
+  cleared it from both Android snooze lists and restored its native notification immediately;
+  switching back re-snoozed only YouTube Music. If the previous player isn't running, its
+  notification returns the next time it posts one.
 
 ## What's new in 1.3.1
 
@@ -47,7 +62,7 @@ Selected player's MediaSession
 ## Install
 
 Download the APK from the [latest release](https://github.com/megadonkatsu/YTRear/releases) and
-sideload it — copy it to the phone and tap it, or `adb install -r YTRear-1.3.1-debug.apk`. HyperOS
+sideload it — copy it to the phone and tap it, or `adb install -r YTRear-1.3.2-debug.apk`. HyperOS
 will ask you to allow installs from whichever app you opened it with. Each release ships a
 `.sha256` file; check it against your download before installing.
 
@@ -102,6 +117,10 @@ That is deliberate, not a fault: if both appear in SystemUI, HyperOS drops YTRea
 entry during a skip. Playback is untouched, and YTRear's card becomes the visible player. To get
 the native notification back, turn off YTRear's notification access, then force-stop and reopen
 the player.
+
+When another player is selected, YTRear automatically releases the previous player's snoozed
+notification. If that player is still running, its notification can return immediately; otherwise,
+it appears normally the next time the player starts or posts a media notification.
 
 Uninstalling YTRear does not change the selected player's settings or data. Android may retain the
 currently snoozed notification after uninstall; if it does not return immediately, force-stop the

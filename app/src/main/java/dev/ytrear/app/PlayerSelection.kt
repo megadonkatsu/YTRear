@@ -22,6 +22,7 @@ object PlayerSelection {
     private const val PREFS = "player_selection"
     private const val KEY_PACKAGE = "package"
     private const val KEY_LABEL = "label"
+    private const val KEY_PENDING_RESTORE_PACKAGES = "pending_restore_packages"
 
     fun selectedPackage(context: Context): String? =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -37,11 +38,41 @@ object PlayerSelection {
     }
 
     fun select(context: Context, app: AppEntry) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit {
+        val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val previousPackage = preferences.getString(KEY_PACKAGE, null)
+            ?.takeIf { it.isNotBlank() }
+        val pendingRestores = preferences
+            .getStringSet(KEY_PENDING_RESTORE_PACKAGES, emptySet())
+            .orEmpty()
+            .toMutableSet()
+        if (previousPackage != null && previousPackage != app.packageName) {
+            pendingRestores += previousPackage
+        }
+
+        preferences.edit {
             putString(KEY_PACKAGE, app.packageName)
             putString(KEY_LABEL, app.label)
+            putStringSet(KEY_PENDING_RESTORE_PACKAGES, pendingRestores)
         }
         Probe.log("PLAYER: selected ${app.label} (${app.packageName})")
+    }
+
+    /** Packages whose YTRear-managed media notification should return after a player switch. */
+    fun pendingRestorePackages(context: Context): Set<String> =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getStringSet(KEY_PENDING_RESTORE_PACKAGES, emptySet())
+            .orEmpty()
+            .toSet()
+
+    fun markRestoresHandled(context: Context, packages: Set<String>) {
+        if (packages.isEmpty()) return
+        val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val remaining = preferences
+            .getStringSet(KEY_PENDING_RESTORE_PACKAGES, emptySet())
+            .orEmpty()
+            .toMutableSet()
+        if (!remaining.removeAll(packages)) return
+        preferences.edit { putStringSet(KEY_PENDING_RESTORE_PACKAGES, remaining) }
     }
 
     /**
