@@ -24,8 +24,8 @@ class RearButtonReceiver : BroadcastReceiver() {
         }
 
         Probe.log(
-            if (sent) "REAR BUTTON: sent $button to YouTube Music"
-            else "REAR BUTTON: $button ignored; no YouTube Music session"
+            if (sent) "REAR BUTTON: sent $button to ${MediaHub.targetPackage}"
+            else "REAR BUTTON: $button ignored; no selected-player session"
         )
     }
 

@@ -1,6 +1,51 @@
-# YTRear 1.2 testing
+# YTRear testing
 
-This is the current validation checklist for the installed stable build.
+## Version 1.3 multi-player candidate
+
+Version 1.3 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.
+The picker is shown whenever the main activity is launched and lists every enabled app with a
+launcher activity. Only apps that publish a standard Android `MediaSession` can be proxied.
+
+Before promoting 1.3:
+
+- [ ] Confirm the picker opens on launch and can be searched by label or package name.
+- [ ] Confirm Spotify is omitted because it is supported by the rear screen natively.
+- [ ] Confirm cancelling keeps the previous selection and selecting an app starts or refreshes the
+  proxy service.
+- [ ] Confirm a selected player remains selected across process death and reboot.
+- [ ] Confirm proxy notification taps open the selected player.
+- [ ] Run play/pause, next, previous, metadata, artwork, screen-off, and lifecycle checks for each
+  supported player.
+- [ ] Confirm switching players clears the old session and binds only the newly selected package.
+- [ ] Re-run the complete 1.2 YouTube Music regression below.
+
+YouTube Music retains the validated 30-day notification-snooze workaround. Other selected players
+keep their own notification until snoozing has been proven safe for that specific app.
+
+### Automated candidate check — 2026-09-13
+
+- [x] Clean `assembleDebug` and `lintDebug` completed with zero lint errors.
+- [x] Version 1.3 installed over 1.2 while retaining notification access and app data.
+- [x] A normal launch displayed the searchable picker; repeated launch intents produced one dialog.
+- [x] The picker explained that Spotify is omitted, and a previously stored Spotify target was
+  rejected.
+- [x] The selected Poweramp package persisted across force-stop/relaunch.
+- [x] Poweramp and `YTRearProxy` sessions were simultaneously active while an unrelated YouTube
+  Music session was also present, confirming exact-package selection.
+- [x] One targeted Next and one Pause were forwarded to `com.maxmpz.audioplayer`; proxy notification
+  78 remained present.
+- [x] A 1.3 → exact archived 1.2 → 1.3 install round-trip succeeded while preserving the Poweramp
+  selection and notification access.
+- [ ] Physically type into the search field and tap a result. Shell input injection is denied by
+  this firmware, so this cannot be automated over adb.
+- [ ] Repeat the rear-panel controls with display 0 off; physical rear input cannot be injected.
+
+The installed candidate APK SHA-256 is
+`2A113A0A4D2EFAD65CECF251FE10ED185DF3B57932DCAB5224731C457D960BEA`.
+
+## Version 1.2 stable baseline
+
+This is the validation record for the baseline build tagged `baseline-v1.2`.
 
 ## Baseline
 

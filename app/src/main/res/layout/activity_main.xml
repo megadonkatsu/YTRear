@@ -152,10 +152,19 @@
 
         <!-- Primary actions -->
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNotificationAccess"
+            android:id="@+id/btnChoosePlayer"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:layout_marginTop="18dp"
+            android:text="@string/choose_player"
+            app:cornerRadius="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNotificationAccess"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="10dp"
             android:text="@string/enable_notification_access"
             app:cornerRadius="16dp" />
 

@@ -10,7 +10,7 @@ import android.content.Intent
 import android.os.IBinder
 
 /**
- * Keeps the allowlisted proxy MediaSession alive while YouTube Music is playing.
+ * Keeps the allowlisted proxy MediaSession alive while the selected player is active.
  */
 class RearControlService : Service() {
 
@@ -28,6 +28,7 @@ class RearControlService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForeground(NOTIF_ID, foregroundNotification())
         beginObserving()
         return START_STICKY
     }
@@ -75,7 +76,9 @@ class RearControlService : Service() {
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("YouTube Music rear controller")
+            .setContentTitle(
+                "${PlayerSelection.selectedLabel(this) ?: "Selected player"} rear controller"
+            )
             .setContentText("Allowlisted media proxy is active")
             .setContentIntent(open)
             .setOngoing(true)

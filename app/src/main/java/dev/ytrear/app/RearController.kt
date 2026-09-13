@@ -6,12 +6,12 @@ import android.os.Looper
 import android.os.SystemClock
 import java.lang.ref.WeakReference
 
-/** Mirrors YouTube Music into the allowlisted proxy session used by Xiaomi's native widget. */
+/** Mirrors the selected player into the allowlisted proxy session used by Xiaomi's native widget. */
 object RearController {
 
     private const val UPDATE_DEBOUNCE_MS = 150L
     // SystemUI ranks otherwise-equivalent local media cards by their most recent MediaData
-    // update. Reassert the proxy session just after YouTube Music's notification instead of
+    // update. Reassert the proxy session just after the selected player's notification instead of
     // reposting notification 78; reposting makes the rear host remove and re-add the card.
     private const val COMPETING_MEDIA_REASSERT_DELAY_MS = 40L
     private const val RANK_REASSERT_FOLLOWUP_MS = 120L
@@ -94,14 +94,14 @@ object RearController {
         } else {
             // SystemUI parses media notifications and session callbacks on different queues.
             // Hold a short session-only ranking lease so late queue deliveries cannot leave
-            // YouTube Music on top long enough for the rear card's exit animation to render.
+            // the selected player on top long enough for the rear card's exit animation to render.
             main.removeCallbacks(reassertProxyFollowup)
             remainingRankFollowups = RANK_REASSERT_FOLLOWUP_COUNT
             main.postDelayed(reassertProxyFollowup, RANK_REASSERT_FOLLOWUP_MS)
         }
         Probe.log(
             "CONTROLLER: proxy rank reasserted; " +
-                "ytUpdates=$updateCount; playing=${state.playing}; sessionOnly=$sessionOnly"
+                "targetUpdates=$updateCount; playing=${state.playing}; sessionOnly=$sessionOnly"
         )
     }
 
@@ -139,7 +139,7 @@ object RearController {
             lastConfirmedPlayingAt = 0L
         } else if (state.playing && reassertContext != null) {
             // A skip has reached its stable playing state. Refresh the proxy's rank as soon as
-            // the latest YouTube Music notification has entered SystemUI.
+            // the latest selected-player notification has entered SystemUI.
             schedulePendingReassertion()
         }
 
@@ -150,10 +150,10 @@ object RearController {
         main.postDelayed(flush, if (pendingForce) 0L else UPDATE_DEBOUNCE_MS)
     }
 
-    /** Called for an actual competing YouTube Music MediaStyle notification update. */
-    fun onYouTubeMediaNotification(context: Context) {
+    /** Called for an actual competing MediaStyle notification from the selected player. */
+    fun onTargetMediaNotification(context: Context) {
         if (Looper.myLooper() != Looper.getMainLooper()) {
-            main.post { onYouTubeMediaNotification(context.applicationContext) }
+            main.post { onTargetMediaNotification(context.applicationContext) }
             return
         }
 

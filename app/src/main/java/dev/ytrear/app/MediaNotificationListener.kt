@@ -6,9 +6,10 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 
 /**
- * Holding notification-listener access unlocks MediaSessionManager.getActiveSessions(). YouTube
- * Music's own MediaStyle notification is snoozed while YTRear supplies the replacement player;
- * this prevents HyperOS from replacing and collapsing the expanded Dynamic Island on a skip.
+ * Holding notification-listener access unlocks MediaSessionManager.getActiveSessions(). Updates
+ * from the selected player's MediaStyle notification also trigger the proxy's ranking defence.
+ * The original YouTube Music notification retains its proven snooze workaround; other players
+ * remain visible until their notification behaviour has been validated individually.
  */
 class MediaNotificationListener : NotificationListenerService() {
 
@@ -25,19 +26,18 @@ class MediaNotificationListener : NotificationListenerService() {
             MediaHub.addListener(mediaListener)
             observing = true
         }
-        snoozeActiveYouTubeMediaNotification()
+        snoozeActiveYouTubeMediaNotificationIfSelected()
         Probe.log("MEDIA LISTENER: connected; session access=$attached")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        if (sbn?.packageName != MediaHub.YT_MUSIC) return
+        val target = MediaHub.targetPackage ?: PlayerSelection.selectedPackage(this)
+        if (target == null || sbn?.packageName != target) return
         if (!sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)) return
 
-        // Reassert once for the initial competing update, then keep that notification out of
-        // SystemUI while the allowlisted proxy supplies the replacement media player.
-        RearController.onYouTubeMediaNotification(this)
-        snoozeYouTubeMediaNotification(sbn)
+        RearController.onTargetMediaNotification(this)
+        if (target == PlayerSelection.YOUTUBE_MUSIC) snoozeYouTubeMediaNotification(sbn)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -72,7 +72,8 @@ class MediaNotificationListener : NotificationListenerService() {
         }
     }
 
-    private fun snoozeActiveYouTubeMediaNotification() {
+    private fun snoozeActiveYouTubeMediaNotificationIfSelected() {
+        if (MediaHub.targetPackage != PlayerSelection.YOUTUBE_MUSIC) return
         val active = try {
             activeNotifications.orEmpty()
         } catch (e: SecurityException) {
@@ -80,7 +81,7 @@ class MediaNotificationListener : NotificationListenerService() {
             return
         }
         active.firstOrNull {
-            it.packageName == MediaHub.YT_MUSIC &&
+            it.packageName == PlayerSelection.YOUTUBE_MUSIC &&
                 it.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
         }?.let(::snoozeYouTubeMediaNotification)
     }

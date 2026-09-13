@@ -13,15 +13,11 @@ import android.os.SystemClock
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
- * Watches the system's active media sessions and exposes whichever one we want to drive,
- * preferring YouTube Music. Reading sessions requires notification-listener access, which is
- * why [MediaNotificationListener] exists — its ComponentName is the key we hand to
- * MediaSessionManager.
+ * Watches the system's active media sessions and exposes the user-selected app. Reading sessions
+ * requires notification-listener access, which is why [MediaNotificationListener] exists — its
+ * ComponentName is the key we hand to MediaSessionManager.
  */
 object MediaHub {
-
-    const val YT_MUSIC = "com.google.android.apps.youtube.music"
-    private val PREFERRED = listOf(YT_MUSIC, "com.google.android.youtube")
 
     data class NowPlaying(
         val pkg: String,
@@ -59,6 +55,10 @@ object MediaHub {
     private var controller: MediaController? = null
 
     @Volatile
+    var targetPackage: String? = null
+        private set
+
+    @Volatile
     var state: NowPlaying? = null
         private set
 
@@ -75,6 +75,7 @@ object MediaHub {
     fun removeListener(l: Listener) = listeners.remove(l)
 
     fun attach(context: Context): Boolean {
+        targetPackage = PlayerSelection.selectedPackage(context)
         val m = manager ?: context.applicationContext
             .getSystemService(MediaSessionManager::class.java) ?: return false
         manager = m
@@ -99,17 +100,22 @@ object MediaHub {
         connected = false
     }
 
+    /** Drops the previous controller and immediately resolves the newly persisted selection. */
+    fun targetChanged(context: Context): Boolean {
+        targetPackage = PlayerSelection.selectedPackage(context)
+        bind(null)
+        return attach(context.applicationContext)
+    }
+
     private val sessionsChanged =
         MediaSessionManager.OnActiveSessionsChangedListener { list -> bind(pick(list.orEmpty())) }
 
     private fun pick(list: List<MediaController>): MediaController? {
+        val target = targetPackage ?: return null
         if (list.isEmpty()) return null
         fun playing(c: MediaController) = c.playbackState?.state == PlaybackState.STATE_PLAYING
-        for (p in PREFERRED) list.firstOrNull { it.packageName == p && playing(it) }?.let { return it }
-        for (p in PREFERRED) list.firstOrNull { it.packageName == p }?.let { return it }
-        // Never send a rear-screen command to an unrelated player just because YouTube Music
-        // is not running.
-        return null
+        return list.firstOrNull { it.packageName == target && playing(it) }
+            ?: list.firstOrNull { it.packageName == target }
     }
 
     private fun bind(next: MediaController?) {

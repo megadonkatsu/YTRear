@@ -26,9 +26,13 @@ class MainActivity : AppCompatActivity() {
     /** Keeps the now-playing card live while the activity is in front. */
     private val mediaListener = MediaHub.Listener { runOnUiThread { refresh() } }
     private var observingMedia = false
+    private var launchPickerPending = false
+    private var playerPickerShowing = false
+    private var startAfterNotificationPermission = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        launchPickerPending = savedInstanceState == null && intent?.hasExtra("probe") != true
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -43,8 +47,9 @@ class MainActivity : AppCompatActivity() {
         Probe.sink = Probe.Sink { full -> runOnUiThread { b.log.text = full } }
         b.log.text = Probe.text()
 
+        b.btnChoosePlayer.setOnClickListener { showPlayerPicker() }
         b.btnNotificationAccess.setOnClickListener { openNotificationAccess() }
-        b.btnController.setOnClickListener { startController() }
+        b.btnController.setOnClickListener { startSelectedPlayerProxy() }
         b.btnAdvanced.setOnClickListener { toggleAdvanced() }
         b.btnRefresh.setOnClickListener { refresh() }
         b.btnActivity.setOnClickListener { showFromActivity() }
@@ -52,21 +57,15 @@ class MainActivity : AppCompatActivity() {
         b.btnHide.setOnClickListener { hideAll() }
         b.btnOverlayPerm.setOnClickListener { requestOverlay() }
 
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-        }
-
         refresh()
         handleProbeExtra(intent)
+        if (launchPickerPending) b.root.post { showPlayerPicker() }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleProbeExtra(intent)
+        if (intent.hasExtra("probe")) handleProbeExtra(intent) else showPlayerPicker()
     }
 
     /** Lets the probe be driven over adb: -e probe activity|service|hide */
@@ -95,6 +94,8 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun stage(access: Boolean, running: Boolean, playing: MediaHub.NowPlaying?): Stage = when {
+        PlayerSelection.selectedPackage(this) == null ->
+            Stage(R.color.state_bad, R.string.state_player_title, R.string.state_player_detail)
         !access -> Stage(R.color.state_bad, R.string.state_setup_title, R.string.state_setup_detail)
         !running -> Stage(R.color.state_wait, R.string.state_start_title, R.string.state_start_detail)
         playing == null -> Stage(R.color.state_wait, R.string.state_waiting_title, R.string.state_waiting_detail)
@@ -106,6 +107,7 @@ class MainActivity : AppCompatActivity() {
         val access = hasNotificationAccess()
         val running = RearControlService.isRunning
         val nowPlaying = MediaHub.state
+        val selectedLabel = PlayerSelection.selectedLabel(this)
 
         val stage = stage(access, running, nowPlaying)
         b.statusDot.backgroundTintList = ColorStateList.valueOf(getColor(stage.dot))
@@ -122,6 +124,12 @@ class MainActivity : AppCompatActivity() {
 
         // Setup step one disappears for good once it is done; step two stays as a manual retry.
         b.btnNotificationAccess.isVisible = !access
+        b.btnChoosePlayer.text = if (selectedLabel == null) {
+            getString(R.string.choose_player)
+        } else {
+            getString(R.string.selected_player, selectedLabel)
+        }
+        b.btnController.isEnabled = selectedLabel != null
         b.btnController.setText(
             if (running) R.string.refresh_rear_controls else R.string.start_rear_controls
         )
@@ -138,10 +146,14 @@ class MainActivity : AppCompatActivity() {
         val rearDisplay = Displays.pickRear(this)
         b.status.text = buildString {
             append("Installed identity: $packageName\n")
+            append(
+                "Selected player: ${PlayerSelection.selectedLabel(this@MainActivity) ?: "NONE"} " +
+                    "(${PlayerSelection.selectedPackage(this@MainActivity) ?: "none"})\n"
+            )
             append("Notification access: ${if (access) "GRANTED" else "MISSING"}\n")
             append("Media session access: ${if (MediaHub.connected) "CONNECTED" else "DISCONNECTED"}\n")
             append("Rear control service: ${if (RearControlService.isRunning) "RUNNING" else "STOPPED"}\n")
-            append("YouTube Music: ${nowPlaying?.title?.ifBlank { "active" } ?: "no active session"}\n")
+            append("Target session: ${nowPlaying?.title?.ifBlank { "active" } ?: "not active"}\n")
             append("Allowlisted proxy: ${if (NativeMediaProxy.active) "ACTIVE" else "INACTIVE"}\n")
             append("Displays: ${displays.size}\n")
             append("Rear pick: ${rearDisplay?.displayId ?: "none"}\n")
@@ -163,7 +175,64 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
 
+    private fun showPlayerPicker() {
+        if (playerPickerShowing) return
+        playerPickerShowing = true
+        launchPickerPending = true
+        PlayerPickerDialog.show(
+            activity = this,
+            onSelected = { selected ->
+                playerPickerShowing = false
+                launchPickerPending = false
+                PlayerSelection.select(this, selected)
+                MediaHub.targetChanged(this)
+                MediaNotificationListener.requestReconnect(this)
+                startSelectedPlayerProxy()
+                refresh()
+            },
+            onCancelled = {
+                playerPickerShowing = false
+                launchPickerPending = false
+                if (PlayerSelection.selectedPackage(this) != null) startSelectedPlayerProxy()
+                refresh()
+            }
+        )
+    }
+
+    private fun startSelectedPlayerProxy() {
+        if (PlayerSelection.selectedPackage(this) == null) {
+            showPlayerPicker()
+            return
+        }
+        if (
+            Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            startAfterNotificationPermission = true
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
+            return
+        }
+        startController()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_NOTIFICATIONS && startAfterNotificationPermission) {
+            startAfterNotificationPermission = false
+            startController()
+        }
+    }
+
     private fun startController() {
+        if (PlayerSelection.selectedPackage(this) == null) {
+            showPlayerPicker()
+            return
+        }
         if (!hasNotificationAccess()) {
             Probe.log("CONTROLLER: notification access is required")
             openNotificationAccess()
@@ -229,7 +298,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (hasNotificationAccess()) {
+        if (
+            !launchPickerPending &&
+            !startAfterNotificationPermission &&
+            PlayerSelection.selectedPackage(this) != null &&
+            hasNotificationAccess()
+        ) {
             MediaNotificationListener.requestReconnect(this)
             RearControlService.start(this)
             if (MediaHub.attach(this)) {
@@ -255,5 +329,9 @@ class MainActivity : AppCompatActivity() {
         Probe.sink = null
         hideActivityPresentation()
         super.onDestroy()
+    }
+
+    companion object {
+        private const val REQUEST_NOTIFICATIONS = 1
     }
 }

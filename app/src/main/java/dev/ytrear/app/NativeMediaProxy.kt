@@ -16,11 +16,11 @@ import android.os.SystemClock
 import androidx.core.graphics.get
 
 /**
- * Presents YouTube Music as an active session owned by the allowlisted application id.
+ * Presents the selected media player as an active session owned by the allowlisted application id.
  *
- * Xiaomi's native rear MAML player ignores YouTube Music's package but accepts this app's
- * allowlisted `com.luna.music` identity. The native widget talks to this MediaSession; callbacks
- * are forwarded to the real YouTube Music controller held by [MediaHub].
+ * Xiaomi's native rear MAML player ignores unsupported packages but accepts this app's allowlisted
+ * `com.luna.music` identity. The native widget talks to this MediaSession; callbacks are forwarded
+ * to the selected app's real controller held by [MediaHub].
  */
 object NativeMediaProxy {
 
@@ -127,7 +127,8 @@ object NativeMediaProxy {
             return
         }
 
-        val title = state.title.ifBlank { "YouTube Music" }
+        val playerName = PlayerSelection.selectedLabel(app) ?: "Selected player"
+        val title = state.title.ifBlank { playerName }
         val artist = state.artist.ifBlank { "Now playing" }
         val payload = Payload(
             title = title,
@@ -156,6 +157,7 @@ object NativeMediaProxy {
         lastPlaybackPayload = playbackPayload
 
         val proxy = ensureSession(app)
+        proxy.setSessionActivity(targetPlayerPendingIntent(app))
         var art: Bitmap? = null
         if (displayChanged || force || promote || !notificationPublished) {
             art = scaleArtwork(state.art)
@@ -168,7 +170,7 @@ object NativeMediaProxy {
                     .putString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE, title)
                     .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
                     .putString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE, artist)
-                    .putString(MediaMetadata.METADATA_KEY_ALBUM, "YouTube Music")
+                    .putString(MediaMetadata.METADATA_KEY_ALBUM, playerName)
                     .putLong(MediaMetadata.METADATA_KEY_DURATION, state.duration)
                     .apply {
                         if (art != null) {
@@ -205,7 +207,7 @@ object NativeMediaProxy {
     /**
      * Reposts notification 78 once a track's metadata burst has settled.
      *
-     * The repost is delayed rather than immediate so YouTube Music's staged title/artwork
+     * The repost is delayed rather than immediate so the player's staged title/artwork
      * updates cost one post instead of three. [refreshNotification] then repeats the post, since
      * SystemUI keeps replaying the snapshot it holds for this session until a second post has
      * displaced it.
@@ -316,7 +318,7 @@ object NativeMediaProxy {
 
     /**
      * Starts the extended lease from the real player's first metadata callback as well as from
-     * a proxy skip command. Natural transitions and some YouTube Music callback orderings can
+     * a proxy skip command. Natural transitions and some player callback orderings can
      * publish metadata before the command-side render path observes the new track.
      */
     @Synchronized
@@ -341,7 +343,7 @@ object NativeMediaProxy {
             isActive = false
         }
         context.getSystemService(NotificationManager::class.java).cancel(NOTIF_ID)
-        if (active) Probe.log("PROXY SESSION: inactive; no YouTube Music session")
+        if (active) Probe.log("PROXY SESSION: inactive; no selected-player session")
         active = false
         lastPayload = null
         lastPlaybackPayload = null
@@ -374,7 +376,7 @@ object NativeMediaProxy {
                     MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS
             )
             setSessionActivity(
-                youtubeMusicPendingIntent(context)
+                targetPlayerPendingIntent(context)
             )
             session = this
             Probe.log("PROXY SESSION: created as ${context.packageName}")
@@ -417,7 +419,7 @@ object NativeMediaProxy {
      *
      * Xiaomi only gives an unsupported top-player removal a 150 ms cancellation delay when
      * top-media callbacks keep arriving less than 200 ms apart. A skip can publish its final
-     * YouTube Music state more than a second after the button press, so keep track changes warm
+     * player state more than a second after the button press, so keep track changes warm
      * for the full transition. Each 80 ms proxy callback both wins the media sort and ensures any
      * transient unsupported-player removal is delayed long enough for the next callback to
      * cancel it. Play/pause retains the short lease because it has no metadata transition.
@@ -467,9 +469,10 @@ object NativeMediaProxy {
     }
 
     private fun report(command: String, sent: Boolean) {
+        val target = MediaHub.targetPackage ?: "selected player"
         Probe.log(
-            if (sent) "PROXY CONTROL: sent $command to YouTube Music"
-            else "PROXY CONTROL: ignored $command; no YouTube Music session"
+            if (sent) "PROXY CONTROL: sent $command to $target"
+            else "PROXY CONTROL: ignored $command; no session for $target"
         )
     }
 
@@ -515,7 +518,7 @@ object NativeMediaProxy {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val open = youtubeMusicPendingIntent(context)
+        val open = targetPlayerPendingIntent(context)
         val style = Notification.MediaStyle()
             .setMediaSession(proxy.sessionToken)
             .setShowActionsInCompactView(0, 1, 2)
@@ -564,12 +567,10 @@ object NativeMediaProxy {
     }
 
     /** Opens the real player from both SystemUI media surfaces backed by this proxy session. */
-    private fun youtubeMusicPendingIntent(context: Context): PendingIntent {
-        val launchIntent = context.packageManager.getLaunchIntentForPackage(MediaHub.YT_MUSIC)
-            ?: Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_LAUNCHER)
-                setPackage(MediaHub.YT_MUSIC)
-            }
+    private fun targetPlayerPendingIntent(context: Context): PendingIntent {
+        val target = PlayerSelection.selectedPackage(context)
+        val launchIntent = target?.let(context.packageManager::getLaunchIntentForPackage)
+            ?: Intent(context, MainActivity::class.java)
         launchIntent.addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
         )
