@@ -1,12 +1,12 @@
 # YTRear testing
 
-## Version 1.3 multi-player candidate
+## Version 1.3.1 multi-player candidate
 
-Version 1.3 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.
+Version 1.3.1 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.
 The picker is shown whenever the main activity is launched and lists every enabled app with a
 launcher activity. Only apps that publish a standard Android `MediaSession` can be proxied.
 
-Before promoting 1.3:
+Before promoting 1.3.1:
 
 - [ ] Confirm the picker opens on launch and can be searched by label or package name.
 - [ ] Confirm Spotify is omitted because it is supported by the rear screen natively.
@@ -19,29 +19,36 @@ Before promoting 1.3:
 - [ ] Confirm switching players clears the old session and binds only the newly selected package.
 - [ ] Re-run the complete 1.2 YouTube Music regression below.
 
-YouTube Music retains the validated 30-day notification-snooze workaround. Other selected players
-keep their own notification until snoozing has been proven safe for that specific app.
+Every selected player receives the validated 30-day notification-snooze workaround. YTRear
+replaces the selected app's original MediaStyle notification so it cannot retake HyperOS's
+top-media rank and collapse the expanded Dynamic Island during a track change.
 
 ### Automated candidate check — 2026-09-13
 
 - [x] Clean `assembleDebug` and `lintDebug` completed with zero lint errors.
-- [x] Version 1.3 installed over 1.2 while retaining notification access and app data.
+- [x] Version 1.3.1 installed while retaining notification access and app data.
 - [x] A normal launch displayed the searchable picker; repeated launch intents produced one dialog.
 - [x] The picker explained that Spotify is omitted, and a previously stored Spotify target was
   rejected.
 - [x] The selected Poweramp package persisted across force-stop/relaunch.
 - [x] Poweramp and `YTRearProxy` sessions were simultaneously active while an unrelated YouTube
   Music session was also present, confirming exact-package selection.
-- [x] One targeted Next and one Pause were forwarded to `com.maxmpz.audioplayer`; proxy notification
-  78 remained present.
+- [x] Poweramp's MediaStyle notification was moved into both `Snoozed notifications` and
+  `Pending snoozed notifications` for 30 days, while its underlying MediaSession remained active.
+- [x] Targeted Play, Next, and Pause commands were forwarded through YTRear to
+  `com.maxmpz.audioplayer`; the Poweramp and proxy states stayed synchronized.
+- [x] The exact final APK kept notifications 76 and 78 active, kept Poweramp's original card out of
+  the active list, and logged zero island-removal or `EXPANDED_TO_DELETED` events during Play/Next.
 - [x] A 1.3 → exact archived 1.2 → 1.3 install round-trip succeeded while preserving the Poweramp
   selection and notification access.
+- [ ] Expand the Dynamic Island and press Next with Poweramp selected; confirm it physically stays
+  expanded. ADB input injection is denied by this firmware.
 - [ ] Physically type into the search field and tap a result. Shell input injection is denied by
   this firmware, so this cannot be automated over adb.
 - [ ] Repeat the rear-panel controls with display 0 off; physical rear input cannot be injected.
 
 The installed candidate APK SHA-256 is
-`2A113A0A4D2EFAD65CECF251FE10ED185DF3B57932DCAB5224731C457D960BEA`.
+`145D1C1B1029C233F29B7AC995A4BDDADCB7786D7CCC426B5F2871092E6FD505`.
 
 ## Version 1.2 stable baseline
 

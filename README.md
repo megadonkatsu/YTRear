@@ -63,23 +63,25 @@ be selected, but YTRear will remain at **Waiting for music**.
 Spotify is intentionally omitted from the picker because this Xiaomi firmware already supports it
 on the rear screen without a proxy.
 
-YouTube Music remains the fully validated target. Its MediaStyle notification is snoozed while
-YTRear supplies the replacement player; this preserves HyperOS's expanded Dynamic Island during a
-skip. Other players keep their original notification because snoozing has not been proven safe for
-them yet. Their core proxy controls should work, but each app needs physical regression testing.
+The selected player's MediaStyle notification is snoozed while YTRear supplies the replacement
+player. This prevents the original app from taking back HyperOS's top-media rank and collapsing the
+expanded Dynamic Island during a skip. YouTube Music is the fully validated target; Poweramp's
+session, controls, and notification replacement have been verified on-device. Other apps that
+expose a standard MediaSession should work but still need physical regression testing.
 
-### YouTube Music note
+### Selected-player notification note
 
-No permission or setting changes on YouTube Music itself. One thing to leave alone:
+No permission or setting changes are needed on the selected player itself. One thing to leave
+alone:
 
-**Keep YouTube Music's notifications enabled.** Don't turn them off app-wide. When it is selected,
-YTRear works *with*
-that notification — it snoozes the active media one and posts its own in its place.
+**Keep the selected player's notifications enabled.** Don't turn them off app-wide. YTRear works
+*with* its media notification — it snoozes that notification and posts its own in its place.
 
-Expect YouTube Music's media notification to vanish from the shade while YTRear is running. That is
-deliberate, not a fault: if both appear in SystemUI, HyperOS drops YTRear's Dynamic Island entry
-during a skip. Playback is untouched, and YTRear's card becomes the visible player. To get the
-native one back, turn off YTRear's notification access, then force-stop and reopen YouTube Music.
+Expect the selected player's media notification to vanish from the shade while YTRear is running.
+That is deliberate, not a fault: if both appear in SystemUI, HyperOS drops YTRear's Dynamic Island
+entry during a skip. Playback is untouched, and YTRear's card becomes the visible player. To get
+the native notification back, turn off YTRear's notification access, then force-stop and reopen
+the player.
 
 ## Build
 

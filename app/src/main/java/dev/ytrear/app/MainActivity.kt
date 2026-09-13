@@ -186,7 +186,7 @@ class MainActivity : AppCompatActivity() {
                 launchPickerPending = false
                 PlayerSelection.select(this, selected)
                 MediaHub.targetChanged(this)
-                MediaNotificationListener.requestReconnect(this)
+                MediaNotificationListener.targetChanged(this)
                 startSelectedPlayerProxy()
                 refresh()
             },
@@ -304,7 +304,7 @@ class MainActivity : AppCompatActivity() {
             PlayerSelection.selectedPackage(this) != null &&
             hasNotificationAccess()
         ) {
-            MediaNotificationListener.requestReconnect(this)
+            MediaNotificationListener.targetChanged(this)
             RearControlService.start(this)
             if (MediaHub.attach(this)) {
                 RearController.render(this, MediaHub.state)

@@ -8,8 +8,8 @@ import android.service.notification.StatusBarNotification
 /**
  * Holding notification-listener access unlocks MediaSessionManager.getActiveSessions(). Updates
  * from the selected player's MediaStyle notification also trigger the proxy's ranking defence.
- * The original YouTube Music notification retains its proven snooze workaround; other players
- * remain visible until their notification behaviour has been validated individually.
+ * The selected player's original media notification is snoozed while YTRear supplies its proxy,
+ * preventing the original card from taking back HyperOS's top-media rank during track changes.
  */
 class MediaNotificationListener : NotificationListenerService() {
 
@@ -20,13 +20,14 @@ class MediaNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        activeInstance = this
         isConnected = true
         val attached = MediaHub.attach(this)
         if (!observing) {
             MediaHub.addListener(mediaListener)
             observing = true
         }
-        snoozeActiveYouTubeMediaNotificationIfSelected()
+        snoozeActiveTargetMediaNotification()
         Probe.log("MEDIA LISTENER: connected; session access=$attached")
     }
 
@@ -37,7 +38,7 @@ class MediaNotificationListener : NotificationListenerService() {
         if (!sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)) return
 
         RearController.onTargetMediaNotification(this)
-        if (target == PlayerSelection.YOUTUBE_MUSIC) snoozeYouTubeMediaNotification(sbn)
+        snoozeTargetMediaNotification(sbn)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -61,6 +62,7 @@ class MediaNotificationListener : NotificationListenerService() {
     }
 
     private fun stopObserving() {
+        if (activeInstance === this) activeInstance = null
         isConnected = false
         if (observing) {
             MediaHub.removeListener(mediaListener)
@@ -72,8 +74,8 @@ class MediaNotificationListener : NotificationListenerService() {
         }
     }
 
-    private fun snoozeActiveYouTubeMediaNotificationIfSelected() {
-        if (MediaHub.targetPackage != PlayerSelection.YOUTUBE_MUSIC) return
+    private fun snoozeActiveTargetMediaNotification() {
+        val target = MediaHub.targetPackage ?: PlayerSelection.selectedPackage(this) ?: return
         val active = try {
             activeNotifications.orEmpty()
         } catch (e: SecurityException) {
@@ -81,31 +83,43 @@ class MediaNotificationListener : NotificationListenerService() {
             return
         }
         active.firstOrNull {
-            it.packageName == PlayerSelection.YOUTUBE_MUSIC &&
+            it.packageName == target &&
                 it.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
-        }?.let(::snoozeYouTubeMediaNotification)
+        }?.let(::snoozeTargetMediaNotification)
     }
 
-    private fun snoozeYouTubeMediaNotification(sbn: StatusBarNotification) {
+    private fun snoozeTargetMediaNotification(sbn: StatusBarNotification) {
         try {
-            snoozeNotification(sbn.key, YT_MEDIA_SNOOZE_MS)
-            Probe.log("MEDIA LISTENER: snoozed YouTube Music media notification for 30 days")
+            snoozeNotification(sbn.key, TARGET_MEDIA_SNOOZE_MS)
+            Probe.log(
+                "MEDIA LISTENER: snoozed selected player media notification for 30 days " +
+                    "(${sbn.packageName})"
+            )
         } catch (e: SecurityException) {
             Probe.log("MEDIA LISTENER: notification snooze failed (${e.javaClass.simpleName})")
         }
     }
 
     companion object {
-        private const val YT_MEDIA_SNOOZE_MS = 30L * 24L * 60L * 60L * 1000L
+        private const val TARGET_MEDIA_SNOOZE_MS = 30L * 24L * 60L * 60L * 1000L
+
+        @Volatile
+        private var activeInstance: MediaNotificationListener? = null
 
         @Volatile
         var isConnected = false
             private set
 
-        fun requestReconnect(context: android.content.Context) {
-            NotificationListenerService.requestRebind(
-                ComponentName(context, MediaNotificationListener::class.java)
-            )
+        /** Applies the new selection immediately when the listener is already connected. */
+        fun targetChanged(context: android.content.Context) {
+            val listener = activeInstance
+            if (listener != null) {
+                listener.snoozeActiveTargetMediaNotification()
+            } else {
+                NotificationListenerService.requestRebind(
+                    ComponentName(context, MediaNotificationListener::class.java)
+                )
+            }
         }
     }
 }
