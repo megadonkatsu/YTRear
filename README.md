@@ -83,6 +83,10 @@ entry during a skip. Playback is untouched, and YTRear's card becomes the visibl
 the native notification back, turn off YTRear's notification access, then force-stop and reopen
 the player.
 
+Uninstalling YTRear does not change the selected player's settings or data. Android may retain the
+currently snoozed notification after uninstall; if it does not return immediately, force-stop the
+player, reopen it, and start playback.
+
 ## Build
 
 Requires JDK 17 and the Android SDK (compileSdk 36, build tools 36.0.0).
@@ -101,6 +105,7 @@ package alongside this build. Use it only on a device you own, for interoperabil
 
 ## Docs
 
+- [Changelog](CHANGELOG.md) — versioned behavior changes and removal notes
 - [Research](docs/RESEARCH.md) — reverse-engineering findings and rejected approaches
 - [Testing](docs/TESTING.md) — validation status and diagnostic commands
 - [Version and rollback](docs/ROLLBACK.md) — pinned 1.2 baseline and tested downgrade commands

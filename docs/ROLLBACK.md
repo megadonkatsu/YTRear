@@ -43,3 +43,11 @@ With `$adb` and `$DEVICE` set as in [Testing](TESTING.md):
 The downgrade/upgrade route was successfully exercised on the test phone with the 1.3 candidate.
 Version 1.2 ignores the player-selection preference; reinstalling the multi-player candidate
 restores the saved selection.
+
+## Removing YTRear
+
+YTRear does not modify the selected player's settings or application data. Uninstalling it stops
+future proxying and snoozing, but Android may retain the media notification that was already
+snoozed. If the player's native notification does not reappear immediately after uninstall,
+force-stop the player, reopen it, and start playback. Its normal notification and Dynamic Island
+behavior will then return.
