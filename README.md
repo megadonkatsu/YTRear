@@ -3,6 +3,24 @@
 Control a selected Android music player from the Xiaomi 17 Pro rear "Magic Back Screen" while the
 main display is off. Runs on a locked, non-rooted phone — no Shizuku, no privileged install.
 
+Current build: **1.3.1** (`versionCode 14`) — any player you pick, not just YouTube Music. See the
+[changelog](CHANGELOG.md) for what changed, and [releases](https://github.com/megadonkatsu/YTRear/releases)
+for the signed APK. Version 1.2 remains the tagged stable baseline.
+
+## What's new in 1.3.1
+
+- **Pick any player.** A searchable picker opens with the main screen and lists every installed app
+  that has a launcher. Choose the one YTRear should mirror; the choice persists across restarts and
+  reboots, and **Player** on the main screen switches it at any time.
+- **The Dynamic Island fix now follows your selection.** The notification workaround validated for
+  YouTube Music in 1.2 applies to whichever player you select: YTRear snoozes that app's own
+  MediaStyle notification and posts its proxy in its place, so the original card cannot retake
+  HyperOS's top-media rank and collapse the expanded Dynamic Island during Next or Previous.
+- **Applied the moment it matters** — when you switch players, when the notification listener
+  connects, and whenever the selected player posts a new media notification.
+- **Verified on-device with Poweramp** alongside the full YouTube Music regression. Spotify is
+  omitted from the picker because this firmware already drives it natively.
+
 ## How it works
 
 HyperOS gates its native rear music widget on an exact package-name allowlist. It does not check
@@ -28,8 +46,10 @@ Selected player's MediaSession
 
 ## Install
 
-Install the APK by sideloading it — copy it to the phone and tap it, or `adb install -r
-app-debug.apk`. HyperOS will ask you to allow installs from whichever app you opened it with.
+Download the APK from the [latest release](https://github.com/megadonkatsu/YTRear/releases) and
+sideload it — copy it to the phone and tap it, or `adb install -r YTRear-1.3.1-debug.apk`. HyperOS
+will ask you to allow installs from whichever app you opened it with. Each release ships a
+`.sha256` file; check it against your download before installing.
 
 Then grant these, all on YTRear:
 
