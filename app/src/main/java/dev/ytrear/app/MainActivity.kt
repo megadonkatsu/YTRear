@@ -32,7 +32,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        launchPickerPending = savedInstanceState == null && intent?.hasExtra("probe") != true
+        launchPickerPending = savedInstanceState == null &&
+            intent?.hasExtra("probe") != true &&
+            !PlayerSelection.isAuto(this)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -65,7 +67,11 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.hasExtra("probe")) handleProbeExtra(intent) else showPlayerPicker()
+        if (intent.hasExtra("probe")) {
+            handleProbeExtra(intent)
+        } else if (!PlayerSelection.isAuto(this)) {
+            showPlayerPicker()
+        }
     }
 
     /** Lets the probe be driven over adb: -e probe activity|service|hide */
@@ -83,7 +89,19 @@ class MainActivity : AppCompatActivity() {
                 business = intent.getStringExtra("business") ?: "music"
             )
             "notifoff" -> RearNotification.cancel(this)
+            // Temporary test hooks until the mode UI lands:
+            //   adb shell am start -n com.luna.music/dev.ytrear.app.MainActivity -e probe auto
+            "auto" -> applyPlayerMode(PlayerSelection.Mode.AUTO)
+            "manual" -> applyPlayerMode(PlayerSelection.Mode.MANUAL)
         }
+    }
+
+    private fun applyPlayerMode(mode: PlayerSelection.Mode) {
+        PlayerSelection.setMode(this, mode)
+        MediaHub.targetChanged(this)
+        MediaNotificationListener.targetChanged(this)
+        startSelectedPlayerProxy()
+        refresh()
     }
 
     /** One plain-language sentence for the status card, plus the dot colour behind it. */
@@ -94,7 +112,7 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun stage(access: Boolean, running: Boolean, playing: MediaHub.NowPlaying?): Stage = when {
-        PlayerSelection.selectedPackage(this) == null ->
+        !PlayerSelection.isConfigured(this) ->
             Stage(R.color.state_bad, R.string.state_player_title, R.string.state_player_detail)
         !access -> Stage(R.color.state_bad, R.string.state_setup_title, R.string.state_setup_detail)
         !running -> Stage(R.color.state_wait, R.string.state_start_title, R.string.state_start_detail)
@@ -129,7 +147,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             getString(R.string.selected_player, selectedLabel)
         }
-        b.btnController.isEnabled = selectedLabel != null
+        b.btnController.isEnabled = PlayerSelection.isConfigured(this)
         b.btnController.setText(
             if (running) R.string.refresh_rear_controls else R.string.start_rear_controls
         )
@@ -149,6 +167,11 @@ class MainActivity : AppCompatActivity() {
             append(
                 "Selected player: ${PlayerSelection.selectedLabel(this@MainActivity) ?: "NONE"} " +
                     "(${PlayerSelection.selectedPackage(this@MainActivity) ?: "none"})\n"
+            )
+            append("Player mode: ${PlayerSelection.mode(this@MainActivity).name}\n")
+            append(
+                "Effective target: ${PlayerSelection.targetLabel(this@MainActivity) ?: "NONE"} " +
+                    "(${MediaHub.targetPackage ?: "none"})\n"
             )
             append("Notification access: ${if (access) "GRANTED" else "MISSING"}\n")
             append("Media session access: ${if (MediaHub.connected) "CONNECTED" else "DISCONNECTED"}\n")
@@ -193,14 +216,14 @@ class MainActivity : AppCompatActivity() {
             onCancelled = {
                 playerPickerShowing = false
                 launchPickerPending = false
-                if (PlayerSelection.selectedPackage(this) != null) startSelectedPlayerProxy()
+                if (PlayerSelection.isConfigured(this)) startSelectedPlayerProxy()
                 refresh()
             }
         )
     }
 
     private fun startSelectedPlayerProxy() {
-        if (PlayerSelection.selectedPackage(this) == null) {
+        if (!PlayerSelection.isConfigured(this)) {
             showPlayerPicker()
             return
         }
@@ -229,7 +252,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startController() {
-        if (PlayerSelection.selectedPackage(this) == null) {
+        if (!PlayerSelection.isConfigured(this)) {
             showPlayerPicker()
             return
         }
@@ -301,7 +324,7 @@ class MainActivity : AppCompatActivity() {
         if (
             !launchPickerPending &&
             !startAfterNotificationPermission &&
-            PlayerSelection.selectedPackage(this) != null &&
+            PlayerSelection.isConfigured(this) &&
             hasNotificationAccess()
         ) {
             MediaNotificationListener.targetChanged(this)

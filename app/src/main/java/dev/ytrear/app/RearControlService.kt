@@ -15,8 +15,10 @@ import android.os.IBinder
 class RearControlService : Service() {
 
     private var observing = false
+    private var lastTitleLabel: String? = null
 
     private val mediaListener = MediaHub.Listener { state ->
+        updateForegroundTitleIfNeeded()
         RearController.render(this, state)
     }
 
@@ -74,16 +76,22 @@ class RearControlService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val label = PlayerSelection.targetLabel(this) ?: "Selected player"
+        lastTitleLabel = label
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle(
-                "${PlayerSelection.selectedLabel(this) ?: "Selected player"} rear controller"
-            )
+            .setContentTitle("$label rear controller")
             .setContentText("Allowlisted media proxy is active")
             .setContentIntent(open)
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
+    }
+
+    private fun updateForegroundTitleIfNeeded() {
+        val current = PlayerSelection.targetLabel(this) ?: "Selected player"
+        if (current == lastTitleLabel) return
+        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, foregroundNotification())
     }
 
     companion object {
