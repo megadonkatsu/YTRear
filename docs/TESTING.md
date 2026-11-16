@@ -1,5 +1,33 @@
 # YTRear testing
 
+## Version 1.4.0 auto-detect player candidate
+
+Version 1.4.0 adds an opt-in **Auto-detect active player** mode (`PlayerSelection.Mode.AUTO`) on
+top of the 1.3.2 searchable player picker, plus a searchable **Excluded apps** dialog. `Mode.MANUAL`
+remains the default.
+
+### Automated and on-device check — 2026-11-17
+
+- [x] Clean `assembleDebug` and `lintDebug` completed with zero lint errors.
+- [x] Version 1.4.0 (`versionCode 16`) installed on `Xiaomi 25098PN5AC` while retaining
+  notification access and app data.
+- [x] Auto-detect mode selected `YT Music Morphe` (`app.morphe.android.apps.youtube.music`),
+  mirrored metadata/artwork, snoozed its `MediaStyle` notification for 30 days, and forwarded
+  Play, Pause, and Next commands.
+- [x] Live bidirectional handoffs between `YT Music Morphe` and `SoundCloud`
+  (`com.soundcloud.android`) switched targets immediately on the rising `STATE_PLAYING` edge,
+  restored the previous player's notification within 250 ms, snoozed the new player's notification
+  for 30 days, updated Notification 76's title and Notification 78's click `PendingIntent`, and
+  logged `Skipping update music data for same app: com.luna.music` in `SubScreenCenter` with zero
+  `Removed current widget` events.
+- [x] Excluding the active auto target immediately restored its notification and fell back to the
+  next eligible session; re-including switched back to the playing session.
+- [x] Picker dialog pinned **Auto-detect active player** at position 0 and main screen toggled
+  **Excluded apps** visibility and Now Playing app attribution based on the active mode.
+
+The installed 1.4.0 candidate APK SHA-256 is
+`6F6AE1C6545FBA6C064FFBA9DDD9833E415F40DBDB0B40D44CF2A179A35A2900`.
+
 ## Version 1.3.2 multi-player candidate
 
 Version 1.3.2 starts from the tagged 1.2 baseline and adds a persisted, searchable player picker.

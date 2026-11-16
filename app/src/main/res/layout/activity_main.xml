@@ -161,6 +161,17 @@
             app:cornerRadius="16dp" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExcludedPlayers"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/excluded_apps_none"
+            android:visibility="gone"
+            app:cornerRadius="16dp"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnNotificationAccess"
             android:layout_width="match_parent"
             android:layout_height="54dp"

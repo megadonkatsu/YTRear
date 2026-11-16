@@ -205,6 +205,9 @@ firmware and should not be resumed unless the firmware or product constraints ch
 | 1.0 | Front-card artwork refresh added; device trace passed, Dynamic Island limitation documented |
 | 1.1 | Dynamic Island and proxy-notification taps now open YouTube Music instead of YTRear |
 | 1.2 | Targeted YouTube Music media-notification snooze keeps the expanded Dynamic Island open on skip |
+| 1.3.1 | Searchable launcher-app picker generalizes the proxy and 30-day notification snooze to any selected player |
+| 1.3.2 | Switching players reschedules the previous player's snoozed notification to 250 ms so its native card returns |
+| 1.4.0 | Opt-in auto-detect mode follows the most recently playing eligible session with leading-edge rank priming and per-app exclusions |
 
 Old APK sizes, hashes, transient installation state, and superseded handoff instructions were
 removed from the active documentation. The raw device traces behind these findings were captured
@@ -214,10 +217,12 @@ on a personal device and are not published; the durable conclusions are recorded
 
 | File | Role |
 |---|---|
-| `MediaHub.kt` | Selects YouTube Music, mirrors state, and sends transport commands |
-| `MediaNotificationListener.kt` | Maintains session access and snoozes YouTube Music's competing MediaStyle notification |
+| `MediaHub.kt` | Resolves the manual or auto-detected target session, mirrors state, and sends transport commands |
+| `PlayerSelection.kt` | Persists manual/auto mode, target packages, exclusion list, and pending notification restorations |
+| `PlayerPickerDialog.kt` | Searchable dialogs for choosing auto-detect or a manual player and managing auto-detect exclusions |
+| `MediaNotificationListener.kt` | Maintains session access, snoozes the active target's MediaStyle notification, and restores previous targets |
 | `NativeMediaProxy.kt` | Owns the allowlisted session, media notification, artwork refresh, and rank pulses |
-| `RearController.kt` | Debounces state and guards ranking/track transitions |
+| `RearController.kt` | Debounces state and guards ranking/track and target transitions |
 | `RearControlService.kt` | Keeps the proxy controller alive in a foreground service |
 | `MainActivity.kt` | Setup/status UI plus collapsed historical diagnostics |
 | `RearNotification.kt` | Historical custom `RemoteViews` fallback; awake-screen only |

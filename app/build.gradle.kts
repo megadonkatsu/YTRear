@@ -15,8 +15,8 @@ android {
         applicationId = "com.luna.music"
         minSdk = 29
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.3.2"
+        versionCode = 16
+        versionName = "1.4.0"
     }
 
     buildTypes {

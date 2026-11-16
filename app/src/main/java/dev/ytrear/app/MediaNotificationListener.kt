@@ -34,12 +34,19 @@ class MediaNotificationListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         super.onNotificationPosted(sbn)
-        val target = MediaHub.targetPackage ?: PlayerSelection.selectedPackage(this)
-        if (target == null || sbn?.packageName != target) return
+        if (sbn == null || sbn.packageName == packageName) return
         if (!sbn.notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)) return
+        if (PlayerSelection.isAuto(this) && PlayerSelection.isAutoCandidate(this, sbn.packageName)) {
+            MediaHub.onCandidateMediaNotification(this)
+        }
+        val target = MediaHub.targetPackage ?: PlayerSelection.targetPackage(this) ?: return
 
+        // Defend top-media rank against any competing MediaStyle notification (including a
+        // previous player's notification reposted after restore, or a new player starting up).
         RearController.onTargetMediaNotification(this)
-        snoozeTargetMediaNotification(sbn)
+        if (sbn.packageName == target) {
+            snoozeTargetMediaNotification(sbn)
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -76,7 +83,7 @@ class MediaNotificationListener : NotificationListenerService() {
     }
 
     private fun snoozeActiveTargetMediaNotification() {
-        val target = MediaHub.targetPackage ?: PlayerSelection.selectedPackage(this) ?: return
+        val target = MediaHub.targetPackage ?: PlayerSelection.targetPackage(this) ?: return
         val active = try {
             activeNotifications.orEmpty()
         } catch (e: SecurityException) {
@@ -110,7 +117,13 @@ class MediaNotificationListener : NotificationListenerService() {
             .groupBy { it.packageName }
         val handled = mutableSetOf<String>()
 
+        val target = MediaHub.targetPackage ?: PlayerSelection.targetPackage(this)
         pending.forEach { previousPackage ->
+            if (previousPackage == target) {
+                // Auto mode switched back before the restore ran; keep it snoozed.
+                handled += previousPackage
+                return@forEach
+            }
             var restored = true
             mediaByPackage[previousPackage].orEmpty().forEach { sbn ->
                 try {
@@ -160,6 +173,7 @@ class MediaNotificationListener : NotificationListenerService() {
         fun targetChanged(context: android.content.Context) {
             val listener = activeInstance
             if (listener != null) {
+                RearController.onTargetMediaNotification(listener)
                 listener.restorePreviousPlayerMediaNotifications()
                 listener.snoozeActiveTargetMediaNotification()
             } else {

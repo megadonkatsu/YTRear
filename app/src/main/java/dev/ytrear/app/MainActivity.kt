@@ -32,7 +32,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        launchPickerPending = savedInstanceState == null && intent?.hasExtra("probe") != true
+        launchPickerPending = savedInstanceState == null &&
+            intent?.hasExtra("probe") != true &&
+            !PlayerSelection.isAuto(this)
         b = ActivityMainBinding.inflate(layoutInflater)
         setContentView(b.root)
 
@@ -48,6 +50,7 @@ class MainActivity : AppCompatActivity() {
         b.log.text = Probe.text()
 
         b.btnChoosePlayer.setOnClickListener { showPlayerPicker() }
+        b.btnExcludedPlayers.setOnClickListener { showExcludedPlayers() }
         b.btnNotificationAccess.setOnClickListener { openNotificationAccess() }
         b.btnController.setOnClickListener { startSelectedPlayerProxy() }
         b.btnAdvanced.setOnClickListener { toggleAdvanced() }
@@ -65,7 +68,11 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.hasExtra("probe")) handleProbeExtra(intent) else showPlayerPicker()
+        if (intent.hasExtra("probe")) {
+            handleProbeExtra(intent)
+        } else if (!PlayerSelection.isAuto(this)) {
+            showPlayerPicker()
+        }
     }
 
     /** Lets the probe be driven over adb: -e probe activity|service|hide */
@@ -83,7 +90,19 @@ class MainActivity : AppCompatActivity() {
                 business = intent.getStringExtra("business") ?: "music"
             )
             "notifoff" -> RearNotification.cancel(this)
+            // Temporary test hooks until the mode UI lands:
+            //   adb shell am start -n com.luna.music/dev.ytrear.app.MainActivity -e probe auto
+            "auto" -> applyPlayerMode(PlayerSelection.Mode.AUTO)
+            "manual" -> applyPlayerMode(PlayerSelection.Mode.MANUAL)
         }
+    }
+
+    private fun applyPlayerMode(mode: PlayerSelection.Mode) {
+        PlayerSelection.setMode(this, mode)
+        MediaHub.targetChanged(this)
+        MediaNotificationListener.targetChanged(this)
+        startSelectedPlayerProxy()
+        refresh()
     }
 
     /** One plain-language sentence for the status card, plus the dot colour behind it. */
@@ -93,21 +112,33 @@ class MainActivity : AppCompatActivity() {
         @StringRes val detail: Int
     )
 
-    private fun stage(access: Boolean, running: Boolean, playing: MediaHub.NowPlaying?): Stage = when {
-        PlayerSelection.selectedPackage(this) == null ->
-            Stage(R.color.state_bad, R.string.state_player_title, R.string.state_player_detail)
-        !access -> Stage(R.color.state_bad, R.string.state_setup_title, R.string.state_setup_detail)
-        !running -> Stage(R.color.state_wait, R.string.state_start_title, R.string.state_start_detail)
-        playing == null -> Stage(R.color.state_wait, R.string.state_waiting_title, R.string.state_waiting_detail)
-        !NativeMediaProxy.active -> Stage(R.color.state_wait, R.string.state_linking_title, R.string.state_linking_detail)
-        else -> Stage(R.color.state_ok, R.string.state_ready_title, R.string.state_ready_detail)
+    private fun stage(access: Boolean, running: Boolean, playing: MediaHub.NowPlaying?): Stage {
+        val isAuto = PlayerSelection.isAuto(this)
+        return when {
+            !PlayerSelection.isConfigured(this) ->
+                Stage(R.color.state_bad, R.string.state_player_title, R.string.state_player_detail)
+            !access -> Stage(
+                R.color.state_bad,
+                R.string.state_setup_title,
+                if (isAuto) R.string.state_setup_detail_auto else R.string.state_setup_detail
+            )
+            !running -> Stage(R.color.state_wait, R.string.state_start_title, R.string.state_start_detail)
+            playing == null -> Stage(
+                R.color.state_wait,
+                R.string.state_waiting_title,
+                if (isAuto) R.string.state_waiting_detail_auto else R.string.state_waiting_detail
+            )
+            !NativeMediaProxy.active -> Stage(R.color.state_wait, R.string.state_linking_title, R.string.state_linking_detail)
+            else -> Stage(R.color.state_ok, R.string.state_ready_title, R.string.state_ready_detail)
+        }
     }
 
     private fun refresh() {
         val access = hasNotificationAccess()
         val running = RearControlService.isRunning
         val nowPlaying = MediaHub.state
-        val selectedLabel = PlayerSelection.selectedLabel(this)
+        val isAuto = PlayerSelection.isAuto(this)
+        val targetLabel = PlayerSelection.targetLabel(this)
 
         val stage = stage(access, running, nowPlaying)
         b.statusDot.backgroundTintList = ColorStateList.valueOf(getColor(stage.dot))
@@ -117,22 +148,34 @@ class MainActivity : AppCompatActivity() {
         b.nowPlaying.isVisible = nowPlaying != null
         if (nowPlaying != null) {
             b.trackTitle.text = nowPlaying.title.ifBlank { getString(R.string.unknown_track) }
-            b.trackArtist.text = nowPlaying.artist.ifBlank { getString(R.string.unknown_artist) }
+            val artist = nowPlaying.artist.ifBlank { getString(R.string.unknown_artist) }
+            b.trackArtist.text = if (isAuto && targetLabel != null) "$artist · $targetLabel" else artist
             val art = nowPlaying.art
             if (art != null) b.art.setImageBitmap(art) else b.art.setImageDrawable(null)
         }
 
         // Setup step one disappears for good once it is done; step two stays as a manual retry.
         b.btnNotificationAccess.isVisible = !access
-        b.btnChoosePlayer.text = if (selectedLabel == null) {
-            getString(R.string.choose_player)
-        } else {
-            getString(R.string.selected_player, selectedLabel)
+        b.btnChoosePlayer.text = when {
+            isAuto && targetLabel != null -> getString(R.string.auto_player_active, targetLabel)
+            isAuto -> getString(R.string.auto_player_waiting)
+            targetLabel != null -> getString(R.string.selected_player, targetLabel)
+            else -> getString(R.string.choose_player)
         }
-        b.btnController.isEnabled = selectedLabel != null
+        b.btnExcludedPlayers.isVisible = isAuto
+        if (isAuto) {
+            val excludedCount = PlayerSelection.autoExcludedPackages(this).size
+            b.btnExcludedPlayers.text = if (excludedCount == 0) {
+                getString(R.string.excluded_apps_none)
+            } else {
+                getString(R.string.excluded_apps_count, excludedCount)
+            }
+        }
+        b.btnController.isEnabled = PlayerSelection.isConfigured(this)
         b.btnController.setText(
             if (running) R.string.refresh_rear_controls else R.string.start_rear_controls
         )
+        b.hint.setText(if (isAuto) R.string.daily_hint_auto else R.string.daily_hint)
 
         // Media callbacks arrive in bursts; only pay for the display enumeration when the
         // panel that shows it is actually open.
@@ -150,6 +193,12 @@ class MainActivity : AppCompatActivity() {
                 "Selected player: ${PlayerSelection.selectedLabel(this@MainActivity) ?: "NONE"} " +
                     "(${PlayerSelection.selectedPackage(this@MainActivity) ?: "none"})\n"
             )
+            append("Player mode: ${PlayerSelection.mode(this@MainActivity).name}\n")
+            append(
+                "Effective target: ${PlayerSelection.targetLabel(this@MainActivity) ?: "NONE"} " +
+                    "(${MediaHub.targetPackage ?: "none"})\n"
+            )
+            append("Excluded apps: ${PlayerSelection.autoExcludedPackages(this@MainActivity).size}\n")
             append("Notification access: ${if (access) "GRANTED" else "MISSING"}\n")
             append("Media session access: ${if (MediaHub.connected) "CONNECTED" else "DISCONNECTED"}\n")
             append("Rear control service: ${if (RearControlService.isRunning) "RUNNING" else "STOPPED"}\n")
@@ -190,17 +239,37 @@ class MainActivity : AppCompatActivity() {
                 startSelectedPlayerProxy()
                 refresh()
             },
+            onAutoSelected = {
+                playerPickerShowing = false
+                launchPickerPending = false
+                applyPlayerMode(PlayerSelection.Mode.AUTO)
+            },
             onCancelled = {
                 playerPickerShowing = false
                 launchPickerPending = false
-                if (PlayerSelection.selectedPackage(this) != null) startSelectedPlayerProxy()
+                if (PlayerSelection.isConfigured(this)) startSelectedPlayerProxy()
+                refresh()
+            }
+        )
+    }
+
+    private fun showExcludedPlayers() {
+        if (playerPickerShowing) return
+        playerPickerShowing = true
+        PlayerPickerDialog.showExclusions(
+            activity = this,
+            onFinished = {
+                playerPickerShowing = false
+                MediaHub.targetChanged(this)
+                MediaNotificationListener.targetChanged(this)
+                if (PlayerSelection.isConfigured(this)) startSelectedPlayerProxy()
                 refresh()
             }
         )
     }
 
     private fun startSelectedPlayerProxy() {
-        if (PlayerSelection.selectedPackage(this) == null) {
+        if (!PlayerSelection.isConfigured(this)) {
             showPlayerPicker()
             return
         }
@@ -229,7 +298,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startController() {
-        if (PlayerSelection.selectedPackage(this) == null) {
+        if (!PlayerSelection.isConfigured(this)) {
             showPlayerPicker()
             return
         }
@@ -301,7 +370,7 @@ class MainActivity : AppCompatActivity() {
         if (
             !launchPickerPending &&
             !startAfterNotificationPermission &&
-            PlayerSelection.selectedPackage(this) != null &&
+            PlayerSelection.isConfigured(this) &&
             hasNotificationAccess()
         ) {
             MediaNotificationListener.targetChanged(this)

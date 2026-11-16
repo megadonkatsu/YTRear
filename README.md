@@ -3,9 +3,25 @@
 Control a selected Android music player from the Xiaomi 17 Pro rear "Magic Back Screen" while the
 main display is off. Runs on a locked, non-rooted phone — no Shizuku, no privileged install.
 
-Current build: **1.3.2** (`versionCode 15`) — any player you pick, not just YouTube Music. See the
-[changelog](CHANGELOG.md) for what changed, and [releases](https://github.com/megadonkatsu/YTRear/releases)
-for the signed APK. Version 1.2 remains the tagged stable baseline.
+Current build: **1.4.0** (`versionCode 16`) — auto-detect the most recently active player or pick
+any specific app. See the [changelog](CHANGELOG.md) for what changed, and
+[releases](https://github.com/megadonkatsu/YTRear/releases) for the signed APK. Version 1.2 remains
+the tagged stable baseline.
+
+## What's new in 1.4.0
+
+- **Auto-detect active player.** Choose **Auto-detect active player** at the top of the player
+  picker to let YTRear follow whichever eligible music app most recently started playing, without
+  reopening YTRear to switch targets. Manual single-player selection remains available at any time.
+- **Stationary rear-card handoffs.** When a new player takes audio focus, YTRear primes HyperOS's
+  `< 200 ms` rear-widget retention window, switches the proxy session in place, snoozes the new
+  player's `MediaStyle` notification, and releases the previous player's notification back to the
+  shade.
+- **Per-app exclusions.** In auto mode, **Excluded apps** on the main screen opens a searchable
+  checklist of launchable apps that auto-detect should ignore so video or browser apps can keep
+  their own media cards.
+- **Verified on-device across live multi-player handoffs** (`YT Music Morphe` ↔ `SoundCloud`) with
+  zero rear-widget removals, immediate notification restoration, and full transport forwarding.
 
 ## What's new in 1.3.2
 
@@ -62,7 +78,7 @@ Selected player's MediaSession
 ## Install
 
 Download the APK from the [latest release](https://github.com/megadonkatsu/YTRear/releases) and
-sideload it — copy it to the phone and tap it, or `adb install -r YTRear-1.3.2-debug.apk`. HyperOS
+sideload it — copy it to the phone and tap it, or `adb install -r YTRear-1.4.0-debug.apk`. HyperOS
 will ask you to allow installs from whichever app you opened it with. Each release ships a
 `.sha256` file; check it against your download before installing.
 
@@ -77,14 +93,17 @@ Then grant these, all on YTRear:
 
 Display over other apps is only used by the diagnostic probes under **Advanced**. Skip it.
 
-Open YTRear and choose the player to proxy. The searchable picker lists every installed app with a
-launcher. Select one, grant the requested access, then open that player and start playback.
+Open YTRear and choose how to select a player. Pick **Auto-detect active player** at the top of the
+list to follow whichever music app starts playing, or select one specific app to mirror. Grant the
+requested access, then open your player and start playback.
 
 ### Daily use
 
-YTRear asks for the target whenever its main screen is opened and remembers the current selection.
-After setup, open the selected player and press play. The rear card should appear within a second or
-two. Use **Player** on the main screen to switch targets at any time.
+In **Auto-detect** mode, YTRear remembers the mode and the last active player across restarts and
+reboots; starting playback in another eligible player switches the rear card automatically, and
+**Excluded apps** lets you ignore specific apps. In **Manual** mode, YTRear asks for the target
+whenever its main screen is opened and remembers the current selection. Use **Player** on the main
+screen to change modes or targets at any time.
 
 Don't swipe YTRear away from Recents. HyperOS treats that as a force-stop and will refuse to rebind
 the notification listener until you reopen the app.

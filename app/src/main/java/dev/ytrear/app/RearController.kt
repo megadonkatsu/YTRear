@@ -29,6 +29,7 @@ object RearController {
     private var pendingContext: WeakReference<Context>? = null
     private var pendingState: MediaHub.NowPlaying? = null
     private var pendingForce = false
+    private var pendingPromote = false
     private var latestContext: WeakReference<Context>? = null
 
     private var reassertContext: WeakReference<Context>? = null
@@ -40,20 +41,23 @@ object RearController {
     private var lastConfirmedPlayingAt = 0L
     private var preservePlayingUntil = 0L
     private var transitionOriginTrack: TrackKey? = null
+    private var immediateNextRender = false
 
     private val flush: Runnable = Runnable {
         val context = pendingContext?.get()
         val state = pendingState
         val force = pendingForce
+        val promote = pendingPromote
         pendingContext = null
         pendingState = null
         pendingForce = false
+        pendingPromote = false
         if (context != null) {
             NativeMediaProxy.update(
                 context = context,
                 state = state,
                 force = force,
-                promote = force
+                promote = promote
             )
         }
     }
@@ -143,9 +147,12 @@ object RearController {
             schedulePendingReassertion()
         }
 
+        val immediate = force || immediateNextRender
+        immediateNextRender = false
         pendingContext = WeakReference(app)
         pendingState = effectiveState
-        pendingForce = pendingForce || force
+        pendingForce = pendingForce || immediate
+        pendingPromote = pendingPromote || force
         main.removeCallbacks(flush)
         main.postDelayed(flush, if (pendingForce) 0L else UPDATE_DEBOUNCE_MS)
     }
@@ -191,6 +198,27 @@ object RearController {
         clearTrackTransition()
         lastConfirmedPlayingAt = 0L
     }
+
+    /**
+     * Forgets everything learned about the previous target. A player switch changes the track
+     * key, and without this reset a paused new target would be mistaken for a skip and shown as
+     * playing for the transition grace period.
+     */
+    fun targetSwitched() {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            main.post { targetSwitched() }
+            return
+        }
+        clearPendingReassertion()
+        clearTrackTransition()
+        lastTrackKey = null
+        lastConfirmedPlayingAt = 0L
+        lastCompetingNotificationAt = 0L
+        immediateNextRender = true
+    }
+
+    /** True while the current target is inside the transient-pause grace window of a track skip. */
+    fun isInTrackTransition(): Boolean = SystemClock.elapsedRealtime() < preservePlayingUntil
 
     private fun stabilizeTrackTransition(state: MediaHub.NowPlaying?): MediaHub.NowPlaying? {
         if (state == null) return null

@@ -57,6 +57,7 @@ object NativeMediaProxy {
     private const val RANKING_PULSE_ACTION = PlaybackState.ACTION_SET_RATING
 
     private data class Payload(
+        val pkg: String,
         val title: String,
         val artist: String,
         val duration: Long,
@@ -67,6 +68,7 @@ object NativeMediaProxy {
 
     /** The subset of [Payload] that notification 78 actually renders. */
     private data class NotificationPayload(
+        val pkg: String,
         val title: String,
         val artist: String,
         val artFingerprint: Long
@@ -127,10 +129,11 @@ object NativeMediaProxy {
             return
         }
 
-        val playerName = PlayerSelection.selectedLabel(app) ?: "Selected player"
+        val playerName = PlayerSelection.targetLabel(app) ?: "Selected player"
         val title = state.title.ifBlank { playerName }
         val artist = state.artist.ifBlank { "Now playing" }
         val payload = Payload(
+            pkg = state.pkg,
             title = title,
             artist = artist,
             duration = state.duration,
@@ -255,6 +258,7 @@ object NativeMediaProxy {
     }
 
     private fun notificationPayload(payload: Payload) = NotificationPayload(
+        pkg = payload.pkg,
         title = payload.title,
         artist = payload.artist,
         artFingerprint = payload.artFingerprint
@@ -568,7 +572,7 @@ object NativeMediaProxy {
 
     /** Opens the real player from both SystemUI media surfaces backed by this proxy session. */
     private fun targetPlayerPendingIntent(context: Context): PendingIntent {
-        val target = PlayerSelection.selectedPackage(context)
+        val target = MediaHub.targetPackage ?: PlayerSelection.targetPackage(context)
         val launchIntent = target?.let(context.packageManager::getLaunchIntentForPackage)
             ?: Intent(context, MainActivity::class.java)
         launchIntent.addFlags(
