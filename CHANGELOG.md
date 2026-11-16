@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.4.0 - 2026-11-17
+
+- Added opt-in **Auto-detect active player** mode (`PlayerSelection.Mode.AUTO`) alongside the
+  existing manual selection mode (`Mode.MANUAL` remains the default).
+- In auto mode, `MediaHub` observes all eligible active `MediaSession`s and automatically switches
+  the allowlisted proxy to whichever player most recently transitioned into `STATE_PLAYING`.
+  Current playback stays sticky when paused or during transient track-skip buffering, and rapid
+  back-and-forth switches between simultaneously playing sessions are rate-limited.
+- Primed `SubScreenCenter`'s `< 200 ms` removal-delay window on the leading edge of audio-focus
+  and session-order changes and flushed target switches as immediate session-only updates
+  (`promote = false`), keeping the rear MAML card stationary across live player handoffs.
+- Automatically restores the previous player's snoozed `MediaStyle` notification (250 ms deadline)
+  and snoozes the newly active player's notification for 30 days on every auto handoff, while
+  defending top-media rank against restored notifications.
+- Added a searchable **Excluded apps** dialog (`Excluded from auto-detect`) on the main screen in
+  auto mode so specific apps can be ignored and keep their native notifications.
+- Persists the last auto-detected target across process restarts and reboots.
+- Bumped the candidate to version 1.4.0 (`versionCode 16`).
+
 ## 1.3.2 - 2026-09-13
 
 - Restores the previous player's media notification automatically when the user selects a

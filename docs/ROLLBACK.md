@@ -22,11 +22,18 @@ releases\YTRear-1.2-installed-baseline.apk
 SHA-256 86AE87EFB6C9BDE18F144238AACA59B7D2701B5E5A48E2A873DAB01E6E669E03
 ```
 
-The current 1.3.2 candidate is:
+The 1.3.2 candidate is:
 
 ```text
 releases\YTRear-1.3.2-player-picker-candidate.apk
 SHA-256 9E1314CF8359614F9562A569C7E1CE0950A7D57F295C56550CC7C6A34B995D3E
+```
+
+The current 1.4.0 auto-detect candidate is:
+
+```text
+app\build\outputs\apk\debug\app-debug.apk (1.4.0, versionCode 16)
+SHA-256 6F6AE1C6545FBA6C064FFBA9DDD9833E415F40DBDB0B40D44CF2A179A35A2900
 ```
 
 With `$adb` and `$DEVICE` set as in [Testing](TESTING.md):
