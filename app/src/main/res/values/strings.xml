@@ -6,8 +6,17 @@
     <!-- Primary actions -->
     <string name="choose_player">Choose player</string>
     <string name="selected_player">Player: %1$s</string>
+    <string name="auto_player_waiting">Player: Auto-detect</string>
+    <string name="auto_player_active">Player: Auto (%1$s)</string>
     <string name="choose_player_title">Which player do you want to proxy?</string>
-    <string name="player_picker_detail">Choose any installed app with a standard Android media session. Spotify is omitted because Xiaomi supports it on the rear screen natively.</string>
+    <string name="player_picker_detail">Choose auto-detect to follow whichever music app starts playing, or pick one app with a standard Android media session. Spotify is omitted because Xiaomi supports it on the rear screen natively.</string>
+    <string name="auto_detect_option_title">Auto-detect active player</string>
+    <string name="auto_detect_option_summary">Switch automatically to whichever eligible app starts playing</string>
+    <string name="excluded_apps_none">Excluded apps: None</string>
+    <string name="excluded_apps_count">Excluded apps (%1$d)</string>
+    <string name="excluded_apps_title">Excluded from auto-detect</string>
+    <string name="excluded_apps_detail">Checked apps are ignored by auto-detect and keep their own media notification.</string>
+    <string name="done">Done</string>
     <string name="search_apps">Search apps or package names</string>
     <string name="keep_current_player">Keep current</string>
     <string name="not_now">Not now</string>
@@ -15,16 +24,19 @@
     <string name="start_rear_controls">Start rear controls</string>
     <string name="refresh_rear_controls">Refresh rear controls</string>
     <string name="daily_hint">Choose a player, then open it and press play — the rear card appears on its own.</string>
+    <string name="daily_hint_auto">Open any music player and press play — YTRear switches the rear card automatically.</string>
 
     <!-- Status card -->
     <string name="state_player_title">Choose a player</string>
-    <string name="state_player_detail">Select the app whose playback you want on the rear screen.</string>
+    <string name="state_player_detail">Select the app whose playback you want on the rear screen, or choose auto-detect.</string>
     <string name="state_setup_title">Setup needed</string>
     <string name="state_setup_detail">YTRear needs notification access to read what the selected player is playing.</string>
+    <string name="state_setup_detail_auto">YTRear needs notification access to detect and read active music players.</string>
     <string name="state_start_title">Almost ready</string>
     <string name="state_start_detail">Tap “Start rear controls” once to publish the rear-screen card.</string>
     <string name="state_waiting_title">Waiting for music</string>
     <string name="state_waiting_detail">Open the selected player and press play. The rear card appears within a second or two.</string>
+    <string name="state_waiting_detail_auto">Start playback in any music player. The rear card appears within a second or two.</string>
     <string name="state_linking_title">Connecting</string>
     <string name="state_linking_detail">Handing playback to the rear screen…</string>
     <string name="state_ready_title">Rear controls active</string>
